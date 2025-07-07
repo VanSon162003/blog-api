@@ -12,19 +12,18 @@ module.exports = {
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
 
-        const comments = [];
+        const saved = [];
         for (let i = 0; i < 50; i++) {
-            comments.push({
-                content: faker.lorem.sentences(2),
+            saved.push({
                 post_id: faker.helpers.arrayElement(posts).id,
                 user_id: faker.helpers.arrayElement(users).id,
                 created_at: new Date(),
             });
         }
-        await queryInterface.bulkInsert("comments", comments, {});
+        await queryInterface.bulkInsert("save_posts", saved, {});
     },
 
     async down(queryInterface) {
-        await queryInterface.bulkDelete("comments", null, {});
+        await queryInterface.bulkDelete("save_posts", null, {});
     },
 };

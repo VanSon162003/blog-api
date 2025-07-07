@@ -1,16 +1,17 @@
 "use strict";
 const { faker } = require("@faker-js/faker");
+const { slugify } = require("transliteration");
 
 module.exports = {
-    async up(queryInterface, Sequelize) {
+    async up(queryInterface) {
         const topics = [];
 
-        for (let i = 0; i < 5; i++) {
-            const name = faker.lorem.words(2);
+        for (let i = 0; i < 10; i++) {
+            const name = faker.word.words({ count: { min: 1, max: 3 } });
             topics.push({
                 name,
-                slug: faker.helpers.slugify(name).toLowerCase(),
-                description: faker.lorem.sentence(),
+                slug: slugify(name),
+                thumbnail: faker.image.urlPicsumPhotos(),
                 created_at: new Date(),
                 updated_at: new Date(),
             });

@@ -9,8 +9,7 @@ module.exports = {
          * Example:
          * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
          */
-
-        await queryInterface.createTable("topics", {
+        await queryInterface.createTable("notifications", {
             id: {
                 type: Sequelize.INTEGER({
                     unsigned: true,
@@ -18,17 +17,23 @@ module.exports = {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            name: {
-                type: Sequelize.STRING,
-                unique: true,
+            user_id: {
+                type: Sequelize.INTEGER({
+                    unsigned: true,
+                }),
                 allowNull: false,
+                references: {
+                    model: "users",
+                    key: "id",
+                },
+                onDelete: "CASCADE",
             },
-            description: Sequelize.TEXT,
-            slug: {
-                type: Sequelize.STRING,
-                unique: true,
+            type: Sequelize.STRING,
+            content: Sequelize.TEXT,
+            is_read: {
+                type: Sequelize.BOOLEAN,
+                defaultValue: false,
             },
-            thumbnail: Sequelize.STRING,
             created_at: {
                 type: Sequelize.DATE,
                 defaultValue: Sequelize.NOW,
@@ -47,7 +52,6 @@ module.exports = {
          * Example:
          * await queryInterface.dropTable('users');
          */
-
-        await queryInterface.dropTable("topics");
+        await queryInterface.dropTable("notifications");
     },
 };

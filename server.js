@@ -1,8 +1,13 @@
+require("module-alias/register");
 const express = require("express");
 const cors = require("cors");
 const router = require("./src/routes");
 const methodOverride = require("method-override");
 const { sequelize } = require("./src/db/models");
+
+const notFoundHandle = require("./src/middlewares/errors/notFoundHandle");
+const errorHandler = require("./src/middlewares/errors/erorrHandle");
+
 const app = express();
 const port = 3001;
 
@@ -34,6 +39,14 @@ app.use(express.static("public"));
 // router tổng
 
 app.use("/api/v1", router);
+
+// xử lý tài nguyên không chính xác
+
+app.use(notFoundHandle);
+
+// hàm xử lý lỗi
+
+app.use(errorHandler);
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);

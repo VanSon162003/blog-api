@@ -18,6 +18,17 @@ module.exports = {
                 primaryKey: true,
                 autoIncrement: true,
             },
+            user_id: {
+                type: Sequelize.INTEGER({
+                    unsigned: true,
+                }),
+                allowNull: false,
+                references: {
+                    model: "users",
+                    key: "id",
+                },
+                onDelete: "CASCADE",
+            },
             post_id: {
                 type: Sequelize.INTEGER({
                     unsigned: true,
@@ -29,7 +40,6 @@ module.exports = {
                 },
                 onDelete: "CASCADE",
             },
-            author: Sequelize.STRING,
             content: {
                 type: Sequelize.TEXT,
                 allowNull: false,

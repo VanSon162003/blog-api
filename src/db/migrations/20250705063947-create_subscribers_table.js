@@ -9,8 +9,7 @@ module.exports = {
          * Example:
          * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
          */
-
-        await queryInterface.createTable("topics", {
+        await queryInterface.createTable("subscribers", {
             id: {
                 type: Sequelize.INTEGER({
                     unsigned: true,
@@ -18,17 +17,10 @@ module.exports = {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            name: {
-                type: Sequelize.STRING,
-                unique: true,
-                allowNull: false,
-            },
-            description: Sequelize.TEXT,
-            slug: {
+            email: {
                 type: Sequelize.STRING,
                 unique: true,
             },
-            thumbnail: Sequelize.STRING,
             created_at: {
                 type: Sequelize.DATE,
                 defaultValue: Sequelize.NOW,
@@ -47,7 +39,6 @@ module.exports = {
          * Example:
          * await queryInterface.dropTable('users');
          */
-
-        await queryInterface.dropTable("topics");
+        await queryInterface.dropTable("subscribers");
     },
 };

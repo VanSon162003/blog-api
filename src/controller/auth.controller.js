@@ -1,0 +1,40 @@
+const authService = require("../service/auth.service");
+const response = require("../utils/response");
+
+const register = async (req, res) => {
+    try {
+        const tokenData = await authService.register(req.body);
+        response.success(res, 200, tokenData);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};
+
+const login = async (req, res) => {
+    try {
+        const tokenData = await authService.login(
+            req.body.email,
+            req.body.password
+        );
+        response.success(res, 200, tokenData);
+    } catch (error) {
+        response.error(res, 401, error.message);
+    }
+};
+
+const me = async (req, res) => {
+    response.success(res, 200, req.user);
+};
+
+const refreshToken = async (req, res) => {
+    try {
+        const tokenData = await authService.refreshAccessToken(
+            req.body.refresh_token
+        );
+        response.success(res, 200, tokenData);
+    } catch (error) {
+        response.error(res, 403, error.message);
+    }
+};
+
+module.exports = { register, login, me, refreshToken };
