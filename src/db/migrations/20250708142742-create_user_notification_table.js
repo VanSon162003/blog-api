@@ -3,13 +3,13 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable("follows", {
+        await queryInterface.createTable("user_notification", {
             id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 autoIncrement: true,
                 primaryKey: true,
             },
-            following_id: {
+            user_id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 allowNull: false,
                 references: {
@@ -19,15 +19,19 @@ module.exports = {
                 onUpdate: "CASCADE",
                 onDelete: "CASCADE",
             },
-            followed_id: {
+            notification_id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 allowNull: false,
                 references: {
-                    model: "users",
+                    model: "notifications",
                     key: "id",
                 },
                 onUpdate: "CASCADE",
                 onDelete: "CASCADE",
+            },
+            read_at: {
+                type: Sequelize.DATE,
+                defaultValue: null,
             },
             created_at: {
                 type: Sequelize.DATE,
@@ -39,18 +43,18 @@ module.exports = {
             },
         });
 
-        // Add composite unique constraint to prevent duplicate follows
+        // Add composite unique constraint
         await queryInterface.addIndex(
-            "follows",
-            ["following_id", "followed_id"],
+            "user_notification",
+            ["user_id", "notification_id"],
             {
                 unique: true,
-                name: "follows_following_id_followed_id_unique",
+                name: "user_notification_user_id_notification_id_unique",
             }
         );
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable("follows");
+        await queryInterface.dropTable("user_notification");
     },
 };

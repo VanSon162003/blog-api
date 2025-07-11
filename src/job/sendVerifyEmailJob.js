@@ -1,58 +1,37 @@
-const transporter = require("@/configs/mailer");
-const loadEmail = require("@/utils/loadEmail");
-const usersService = require("@/service/users.service");
-const { createToken } = require("@/utils/jwt");
+const transporter = require("../config/mailer");
+const loadEmail = require("../utils/loadEmail");
+const { User } = require("../db/models");
+const jwtService = require("../service/jwt.service");
+const { where } = require("sequelize");
 
 async function sendVerifyEmailJob(job) {
-    const { userId } = JSON.parse(job.payload);
-    console.log(userId);
+    const { userId } = JSON.parse(job.dataValues.payload);
 
-    const user = await usersService.getById(userId);
-    console.log(user);
+    const user = await User.findOne({
+        where: {
+            id: userId,
+        },
+    });
 
     // Tạo link xác thực cho userId
-    const token = createToken({ userId: user.id }, { expiresIn: 60 * 60 * 12 });
-    const verifyUrl = `http://localhost:3000/admin/verify-email?token=${token}`;
+    const token = jwtService.generateAccessToken(
+        userId,
+        process.env.MAIL_JWT_SECRET,
+        60 * 60 * 12
+    );
+
+    const CLIENT_URL = process.env.CLIENT_URL;
+    const verifyUrl = `${CLIENT_URL}/admin/verify-email?token=${token}`;
     const data = { token, userId, verifyUrl };
 
     // Load email từ template ejs
-    console.log("trong temlate");
-
     const template = await loadEmail("email/verify", data);
-    console.log(template);
 
-    console.log(`Bắt đầu gửi email tới: ${user.email}`);
-
-    const info = await transporter.sendMail({
-        from: "mailer@fullstack.edu.vn>",
+    const a = await transporter.sendMail({
+        from: "mailer@fullstack.edu.vn",
         subject: "Verification email",
-        to: user.email,
+        to: user.dataValues.email,
         html: template,
     });
-
-    // const verifyUrl = `${req.protocol}://${req.host}/admin/verify-email?token=${token}`;
-
-    // await transporter.sendMail({
-    //     from: "mailer@fullstack.edu.vn",
-    //     to: user.email, // Gửi cho đúng tài khoản vừa đăng ký
-    //     html: `
-    //     <div>
-    //         <p>
-    //             Nhấn vào đây để xác thực:
-    //         </p>
-    //         <p>
-    //             <a href="${verifyUrl}">Xác minh tài khoản</a>
-    //         </p>
-    //     </div>
-    // `,
-    // });
-
-    // Update thời gian gửi email
-    // await usersService.update(userId, {
-    //     email_sent_at: new Date(),
-    // });
-
-    console.log(info);
 }
-
 module.exports = sendVerifyEmailJob;

@@ -1,4 +1,3 @@
-const { raw } = require("mysql2");
 const { User } = require("../db/models");
 const { hash, compare } = require("../utils/bcrypt");
 const jwtService = require("./jwt.service");
@@ -8,9 +7,17 @@ const register = async (data) => {
     const user = await User.create({
         ...data,
         password: await hash(data.password),
+        first_name: data.first_name,
+        last_name: data.last_name,
     });
 
-    return jwtService.generateAccessToken(user.id);
+    const userId = user.id;
+    const token = jwtService.generateAccessToken(userId);
+
+    return {
+        userId,
+        token,
+    };
 };
 
 const login = async (email, password) => {
@@ -19,10 +26,7 @@ const login = async (email, password) => {
         throw new Error("Thông tin đăng nhập không hợp lệ.");
     }
 
-    console.log(user);
-
     const isValid = await compare(password, user.password);
-    console.log(isValid);
 
     if (!isValid) {
         throw new Error("Thông tin đăng nhập không hợp lệ.");

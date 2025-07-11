@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
-    const comment = sequelize.define(
-        "Comment",
+    const messages = sequelize.define(
+        "Message",
         {
             user_id: {
                 type: DataTypes.INTEGER({ unsigned: true }),
@@ -12,29 +12,23 @@ module.exports = (sequelize, DataTypes) => {
                 onUpdate: "CASCADE",
                 onDelete: "CASCADE",
             },
-            post_id: {
+            conversation_id: {
                 type: DataTypes.INTEGER({ unsigned: true }),
                 allowNull: false,
                 references: {
-                    model: "posts",
+                    model: "conversations",
                     key: "id",
                 },
                 onUpdate: "CASCADE",
                 onDelete: "CASCADE",
             },
-            parent_id: {
-                type: DataTypes.INTEGER({ unsigned: true }),
-                defaultValue: null,
-                references: {
-                    model: "comments",
-                    key: "id",
-                },
-                onUpdate: "CASCADE",
-                onDelete: "CASCADE",
+            type: {
+                type: DataTypes.STRING(50),
+                defaultValue: "text",
             },
             content: {
                 type: DataTypes.TEXT,
-                allowNull: false,
+                defaultValue: null,
             },
             deleted_at: {
                 type: DataTypes.DATE,
@@ -42,23 +36,23 @@ module.exports = (sequelize, DataTypes) => {
             },
         },
         {
-            tableName: "comments",
+            tableName: "messages",
             underscored: true,
             timestamps: true,
         }
     );
 
-    comment.associate = (db) => {
-        comment.belongsTo(db.Post, {
-            foreignKey: "post_id",
-            as: "post",
+    messages.associate = (db) => {
+        messages.belongsTo(db.User, {
+            foreignKey: "sender_id",
+            as: "user",
         });
 
-        comment.belongsTo(db.User, {
-            foreignKey: "user_id",
-            as: "user",
+        messages.belongsTo(db.Conversation, {
+            foreignKey: "conversation_id",
+            as: "conversation",
         });
     };
 
-    return comment;
+    return messages;
 };

@@ -3,32 +3,21 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable("topics", {
+        await queryInterface.createTable("conversations", {
             id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 autoIncrement: true,
                 primaryKey: true,
             },
             name: {
-                type: Sequelize.STRING(150),
-                allowNull: false,
+                type: Sequelize.STRING(50),
             },
-            slug: {
-                type: Sequelize.STRING(255),
-                unique: true,
-                allowNull: false,
-            },
-            image: {
+            avatar: {
                 type: Sequelize.STRING(255),
                 defaultValue: null,
             },
-            description: {
-                type: Sequelize.TEXT,
-                defaultValue: null,
-            },
-            posts_count: {
-                type: Sequelize.INTEGER,
-                defaultValue: 0,
+            last_message_at: {
+                type: Sequelize.DATE,
             },
             created_at: {
                 type: Sequelize.DATE,
@@ -42,6 +31,6 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable("topics");
+        await queryInterface.dropTable("conversations");
     },
 };

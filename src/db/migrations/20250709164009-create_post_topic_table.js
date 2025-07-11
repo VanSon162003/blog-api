@@ -3,27 +3,27 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable("follows", {
+        await queryInterface.createTable("post_topic", {
             id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 autoIncrement: true,
                 primaryKey: true,
             },
-            following_id: {
+            post_id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 allowNull: false,
                 references: {
-                    model: "users",
+                    model: "posts",
                     key: "id",
                 },
                 onUpdate: "CASCADE",
                 onDelete: "CASCADE",
             },
-            followed_id: {
+            topic_id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 allowNull: false,
                 references: {
-                    model: "users",
+                    model: "topics",
                     key: "id",
                 },
                 onUpdate: "CASCADE",
@@ -38,19 +38,9 @@ module.exports = {
                 defaultValue: Sequelize.NOW,
             },
         });
-
-        // Add composite unique constraint to prevent duplicate follows
-        await queryInterface.addIndex(
-            "follows",
-            ["following_id", "followed_id"],
-            {
-                unique: true,
-                name: "follows_following_id_followed_id_unique",
-            }
-        );
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable("follows");
+        await queryInterface.dropTable("post_topic");
     },
 };

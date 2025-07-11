@@ -1,17 +1,19 @@
 "use strict";
 const { faker } = require("@faker-js/faker");
-const { slugify } = require("transliteration");
+const slugify = require("slugify");
 
 module.exports = {
-    async up(queryInterface) {
+    async up(queryInterface, Sequelize) {
         const topics = [];
 
         for (let i = 0; i < 10; i++) {
-            const name = faker.word.words({ count: { min: 1, max: 3 } });
+            const name = faker.lorem.words(3);
             topics.push({
                 name,
-                slug: slugify(name),
-                thumbnail: faker.image.urlPicsumPhotos(),
+                slug: slugify(name, { lower: true }),
+                image: faker.image.url(),
+                description: faker.lorem.sentences(),
+                posts_count: 0,
                 created_at: new Date(),
                 updated_at: new Date(),
             });
@@ -20,7 +22,7 @@ module.exports = {
         await queryInterface.bulkInsert("topics", topics, {});
     },
 
-    async down(queryInterface) {
+    async down(queryInterface, Sequelize) {
         await queryInterface.bulkDelete("topics", null, {});
     },
 };

@@ -1,10 +1,17 @@
 const authService = require("../service/auth.service");
 const response = require("../utils/response");
 
+const { Queue } = require("../db/models");
+
 const register = async (req, res) => {
     try {
-        const tokenData = await authService.register(req.body);
-        response.success(res, 200, tokenData);
+        const { userId, token } = await authService.register(req.body);
+
+        await Queue.create({
+            type: "sendVerifyEmailJob",
+            payload: { userId },
+        });
+        response.success(res, 200, token);
     } catch (error) {
         response.error(res, 400, error.message);
     }

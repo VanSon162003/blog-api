@@ -1,23 +1,80 @@
+const { verify } = require("jsonwebtoken");
+
 module.exports = (sequelize, DataTypes) => {
-    const topic = sequelize.define(
+    const user = sequelize.define(
         "User",
         {
-            name: {
+            first_name: {
                 type: DataTypes.STRING,
             },
-            username: DataTypes.TEXT,
+            last_name: {
+                type: DataTypes.STRING,
+            },
             email: {
                 type: DataTypes.STRING,
-                allowNull: false,
+                unique: true,
+                defaultValue: null,
             },
             password: {
                 type: DataTypes.STRING,
+                defaultValue: null,
+            },
+            two_factor_enabled: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false,
+            },
+            two_factor_secret: {
+                type: DataTypes.STRING,
+                defaultValue: null,
+            },
+            username: {
+                type: DataTypes.STRING,
+                unique: true,
             },
             avatar: {
                 type: DataTypes.STRING,
+                defaultValue: null,
             },
-            bio: {
+            title: {
+                type: DataTypes.STRING,
+            },
+            about: {
                 type: DataTypes.TEXT,
+            },
+            posts_count: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
+            },
+            follower_count: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
+            },
+            following_count: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
+            },
+            likes_count: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
+            },
+            address: {
+                type: DataTypes.TEXT,
+            },
+            website_url: {
+                type: DataTypes.STRING,
+            },
+            twitter_url: {
+                type: DataTypes.STRING,
+            },
+            github_url: {
+                type: DataTypes.STRING,
+            },
+            linkedin_url: {
+                type: DataTypes.STRING,
+            },
+            verified_at: {
+                type: DataTypes.DATE,
+                defaultValue: null,
             },
         },
         {
@@ -27,5 +84,25 @@ module.exports = (sequelize, DataTypes) => {
         }
     );
 
-    return topic;
+    user.associate = (db) => {
+        user.hasMany(db.Post, {
+            foreignKey: "user_id",
+            as: "posts",
+        });
+        user.hasMany(db.Comment, {
+            foreignKey: "user_id",
+            as: "comments",
+        });
+
+        user.hasMany(db.Message, {
+            foreignKey: "sender_id",
+            as: "messages",
+        });
+        user.hasMany(db.Conversation, {
+            foreignKey: "created_by",
+            as: "conversations",
+        });
+    };
+
+    return user;
 };

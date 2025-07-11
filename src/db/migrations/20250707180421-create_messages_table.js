@@ -3,13 +3,13 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable("follows", {
+        await queryInterface.createTable("messages", {
             id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 autoIncrement: true,
                 primaryKey: true,
             },
-            following_id: {
+            user_id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 allowNull: false,
                 references: {
@@ -19,15 +19,27 @@ module.exports = {
                 onUpdate: "CASCADE",
                 onDelete: "CASCADE",
             },
-            followed_id: {
+            conversation_id: {
                 type: Sequelize.INTEGER({ unsigned: true }),
                 allowNull: false,
                 references: {
-                    model: "users",
+                    model: "conversations",
                     key: "id",
                 },
                 onUpdate: "CASCADE",
                 onDelete: "CASCADE",
+            },
+            type: {
+                type: Sequelize.STRING(50),
+                defaultValue: "text",
+            },
+            content: {
+                type: Sequelize.TEXT,
+                defaultValue: null,
+            },
+            deleted_at: {
+                type: Sequelize.DATE,
+                defaultValue: null,
             },
             created_at: {
                 type: Sequelize.DATE,
@@ -38,19 +50,9 @@ module.exports = {
                 defaultValue: Sequelize.NOW,
             },
         });
-
-        // Add composite unique constraint to prevent duplicate follows
-        await queryInterface.addIndex(
-            "follows",
-            ["following_id", "followed_id"],
-            {
-                unique: true,
-                name: "follows_following_id_followed_id_unique",
-            }
-        );
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable("follows");
+        await queryInterface.dropTable("messages");
     },
 };

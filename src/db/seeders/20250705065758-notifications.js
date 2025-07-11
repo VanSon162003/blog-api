@@ -1,26 +1,25 @@
+"use strict";
 const { faker } = require("@faker-js/faker");
 
 module.exports = {
-    async up(queryInterface) {
-        const users = await queryInterface.sequelize.query(
-            `SELECT id FROM users`,
-            { type: queryInterface.sequelize.QueryTypes.SELECT }
-        );
-
+    async up(queryInterface, Sequelize) {
         const notifications = [];
-        for (let i = 0; i < 30; i++) {
+
+        for (let i = 1; i <= 10; i++) {
             notifications.push({
-                user_id: faker.helpers.arrayElement(users).id,
-                type: faker.helpers.arrayElement(["like", "comment", "follow"]),
-                content: faker.lorem.sentence(),
-                is_read: faker.datatype.boolean(),
+                type: "info",
+                title: faker.lorem.sentence(),
+                notifiable_type: "Post",
+                notifiable_id: i,
                 created_at: new Date(),
+                updated_at: new Date(),
             });
         }
+
         await queryInterface.bulkInsert("notifications", notifications, {});
     },
 
-    async down(queryInterface) {
+    async down(queryInterface, Sequelize) {
         await queryInterface.bulkDelete("notifications", null, {});
     },
 };

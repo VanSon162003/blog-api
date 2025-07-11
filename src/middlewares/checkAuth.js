@@ -5,6 +5,7 @@ const jwtService = require("../service/jwt.service");
 async function checkAuth(req, res, next) {
     try {
         const token = req.headers?.authorization?.replace("Bearer ", "");
+
         if (!token) {
             return response.error(res, 401, "Token không được cung cấp");
         }

@@ -1,29 +1,39 @@
-const { faker } = require("@faker-js/faker");
+"use strict";
 
 module.exports = {
-    async up(queryInterface) {
+    async up(queryInterface, Sequelize) {
         const users = await queryInterface.sequelize.query(
             `SELECT id FROM users`,
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
 
         const follows = [];
-        for (let i = 0; i < 30; i++) {
-            const follower = faker.helpers.arrayElement(users);
-            let following = faker.helpers.arrayElement(users);
-            while (follower.id === following.id) {
-                following = faker.helpers.arrayElement(users);
+        const uniquePairs = new Set();
+
+        while (follows.length < 20 && users.length > 1) {
+            const follower = users[Math.floor(Math.random() * users.length)];
+            let followed = users[Math.floor(Math.random() * users.length)];
+
+            while (follower.id === followed.id) {
+                followed = users[Math.floor(Math.random() * users.length)];
             }
-            follows.push({
-                follower_id: follower.id,
-                following_id: following.id,
-                created_at: new Date(),
-            });
+
+            const key = `${follower.id}-${followed.id}`;
+            if (!uniquePairs.has(key)) {
+                uniquePairs.add(key);
+                follows.push({
+                    following_id: follower.id,
+                    followed_id: followed.id,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                });
+            }
         }
+
         await queryInterface.bulkInsert("follows", follows, {});
     },
 
-    async down(queryInterface) {
+    async down(queryInterface, Sequelize) {
         await queryInterface.bulkDelete("follows", null, {});
     },
 };

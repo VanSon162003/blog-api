@@ -6,10 +6,22 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            description: DataTypes.TEXT,
             slug: {
                 type: DataTypes.STRING,
+                unique: true,
                 allowNull: false,
+            },
+            image: {
+                type: DataTypes.STRING,
+                defaultValue: null,
+            },
+            description: {
+                type: DataTypes.TEXT,
+                defaultValue: null,
+            },
+            posts_count: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
             },
         },
         {
