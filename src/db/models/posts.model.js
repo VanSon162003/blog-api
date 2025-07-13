@@ -69,9 +69,9 @@ module.exports = (sequelize, DataTypes) => {
     );
 
     post.associate = (db) => {
-        post.belongsTo(db.Topic, {
-            foreignKey: "topic_id",
-            as: "topic",
+        post.belongsToMany(db.Topic, {
+            through: "post_topic",
+            as: "topics",
         });
         post.belongsTo(db.User, {
             foreignKey: "user_id",
@@ -81,6 +81,14 @@ module.exports = (sequelize, DataTypes) => {
         post.hasMany(db.Comment, {
             foreignKey: "post_id",
             as: "comments",
+        });
+        post.hasMany(db.Like, {
+            foreignKey: "likeable_id",
+            constraints: false,
+            scope: {
+                likeable_type: "post",
+            },
+            as: "likes",
         });
     };
 

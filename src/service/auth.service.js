@@ -1,4 +1,5 @@
-const { User } = require("../db/models");
+const { where } = require("sequelize");
+const { User, Queue } = require("../db/models");
 const { hash, compare } = require("../utils/bcrypt");
 const jwtService = require("./jwt.service");
 const refreshTokenService = require("./refreshToken.service");
@@ -41,10 +42,93 @@ const login = async (email, password) => {
     };
 };
 
+const forgotPassword = async (email) => {
+    const user = await User.findOne({
+        where: {
+            email,
+        },
+    });
+
+    if (!user) {
+        throw new Error("Email Không tồn tại");
+    }
+
+    await User.update({ verified_at: null }, { where: { id: user.id } });
+    await Queue.create({
+        type: "sendVerifyEmailJob",
+        payload: { userId: user.id },
+    });
+};
+
+const resetPassword = async (data) => {
+    const { userId, password, ...remaining } = data;
+
+    const { dataValues: user } = await User.findOne({ where: { id: userId } });
+    console.log(user);
+
+    if (!user) {
+        throw new Error("Thông tin đăng nhập không hợp lệ.");
+    }
+
+    const isValid = await compare(password, user.password);
+
+    if (isValid) throw new Error("Vui lòng nhập mật khẩu khác");
+
+    try {
+        await User.update(
+            {
+                password: await hash(password),
+            },
+            {
+                where: {
+                    id: userId,
+                },
+            }
+        );
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+const verifyEmail = async (token) => {
+    try {
+        const { userId } = jwtService.verifyAccessToken(
+            token,
+            process.env.MAIL_JWT_SECRET
+        );
+
+        const { dataValues: user } = await User.findOne({
+            where: { id: userId },
+        });
+
+        if (user.verified_at) {
+            return "verified";
+        }
+
+        await User.update(
+            { verified_at: Date.now() },
+            {
+                where: { id: userId },
+            }
+        );
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+const verifyToken = async (token) => {
+    try {
+        return jwtService.verifyAccessToken(token, process.env.MAIL_JWT_SECRET);
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
 const refreshAccessToken = async (refreshTokenString) => {
     const refreshToken = await refreshTokenService.findValidRefreshToken(
         refreshTokenString
     );
+
     if (!refreshToken) {
         throw new Error("Refresh token không hợp lệ");
     }
@@ -66,4 +150,8 @@ module.exports = {
     register,
     login,
     refreshAccessToken,
+    forgotPassword,
+    verifyEmail,
+    verifyToken,
+    resetPassword,
 };

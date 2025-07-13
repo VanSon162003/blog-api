@@ -25,7 +25,7 @@ const login = async (req, res) => {
         );
         response.success(res, 200, tokenData);
     } catch (error) {
-        response.error(res, 401, error.message);
+        response.error(res, 402, error.message);
     }
 };
 
@@ -34,6 +34,8 @@ const me = async (req, res) => {
 };
 
 const refreshToken = async (req, res) => {
+    console.log("token: +", req.body.refresh_token);
+
     try {
         const tokenData = await authService.refreshAccessToken(
             req.body.refresh_token
@@ -44,4 +46,60 @@ const refreshToken = async (req, res) => {
     }
 };
 
-module.exports = { register, login, me, refreshToken };
+const forgotPassword = async (req, res) => {
+    try {
+        await authService.forgotPassword(req.body.email);
+
+        res.status(201).send("");
+    } catch (error) {
+        throw new Error("Email không tồn tại");
+    }
+};
+
+const resetPassword = async (req, res) => {
+    try {
+        await authService.resetPassword(req.body);
+        res.status(200).send("");
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+const verifyEmail = async (req, res) => {
+    try {
+        const check = await authService.verifyEmail(req.query.token);
+
+        if (check === "verified") {
+            return res.json({
+                status: true,
+            });
+        }
+
+        res.status(201).send("");
+    } catch (error) {
+        throw new Error("Token không tồn tại");
+    }
+};
+
+const verifyToken = async (req, res) => {
+    try {
+        const verify = await authService.verifyToken(req.query.token);
+
+        res.status(201).json({
+            data: verify,
+        });
+    } catch (error) {
+        throw new Error("Token không hợp lệ");
+    }
+};
+
+module.exports = {
+    register,
+    login,
+    me,
+    refreshToken,
+    forgotPassword,
+    verifyEmail,
+    verifyToken,
+    resetPassword,
+};

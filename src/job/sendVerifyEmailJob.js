@@ -14,20 +14,22 @@ async function sendVerifyEmailJob(job) {
     });
 
     // Tạo link xác thực cho userId
-    const token = jwtService.generateAccessToken(
+    const { access_token } = jwtService.generateAccessToken(
         userId,
         process.env.MAIL_JWT_SECRET,
         60 * 60 * 12
     );
 
     const CLIENT_URL = process.env.CLIENT_URL;
-    const verifyUrl = `${CLIENT_URL}/admin/verify-email?token=${token}`;
-    const data = { token, userId, verifyUrl };
+
+    const verifyUrl = `${CLIENT_URL}verify-email?token=${access_token}`;
+
+    const data = { token: access_token, userId, verifyUrl };
 
     // Load email từ template ejs
     const template = await loadEmail("email/verify", data);
 
-    const a = await transporter.sendMail({
+    await transporter.sendMail({
         from: "mailer@fullstack.edu.vn",
         subject: "Verification email",
         to: user.dataValues.email,

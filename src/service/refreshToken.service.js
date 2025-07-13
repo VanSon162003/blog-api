@@ -35,7 +35,7 @@ const createRefreshToken = async (userId) => {
 const findValidRefreshToken = async (token) => {
     return await RefreshToken.findOne({
         where: {
-            token: token,
+            token,
             expired_at: {
                 [Op.gte]: Date.now(),
             },

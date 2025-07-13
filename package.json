@@ -1,4 +1,8 @@
 {
+    "scripts": {
+        "queue": "node --watch src/workers/queueWorker.js",
+        "start": "node --watch server.js"
+    },
     "dependencies": {
         "@faker-js/faker": "^9.8.0",
         "bcrypt": "^6.0.0",

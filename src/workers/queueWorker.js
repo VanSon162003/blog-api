@@ -27,6 +27,7 @@ async function jobProcess(job) {
 async function queueWorker() {
     while (true) {
         const jobs = await QueueService.findPendingJobs();
+        // [job.type]
 
         for (let job of jobs) {
             await jobProcess(job);

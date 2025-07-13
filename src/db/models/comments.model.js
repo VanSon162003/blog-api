@@ -58,6 +58,14 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "user_id",
             as: "user",
         });
+        comment.hasMany(db.Like, {
+            foreignKey: "likeable_id",
+            constraints: false,
+            scope: {
+                likeable_type: "comment",
+            },
+            as: "likes",
+        });
     };
 
     return comment;

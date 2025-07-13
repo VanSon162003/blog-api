@@ -1,10 +1,21 @@
 const { where } = require("sequelize");
-const { Post, Topic } = require("../db/models");
+const { Post, Topic, User } = require("../db/models");
+const likesService = require("./likes.service");
 
 class PostsService {
     async getAll() {
-        const posts = await Post.findAll();
-        return posts;
+        const posts = await Post.findAll({
+            include: [
+                { model: Topic, as: "topics" },
+                { model: User, as: "user" },
+            ],
+        });
+
+        const likes = await likesService.getAll();
+
+        const postIds = posts.map((post) => post.id);
+
+        return { posts, postIds };
     }
 
     async getById(id) {
