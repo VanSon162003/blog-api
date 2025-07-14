@@ -5,6 +5,7 @@ const checkAuth = require("../middlewares/checkAuth");
 
 router.get("/", checkAuth, postsController.getList);
 router.get("/topic/:topicId", checkAuth, postsController.getListByTopicId);
+router.get("/user/bookmarks", checkAuth, postsController.getListByUserId);
 router.post("/", postsController.create);
 router.post("/:postId/like", checkAuth, postsController.toggleLike);
 router.put("/:id", postsController.update);

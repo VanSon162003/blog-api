@@ -24,6 +24,15 @@ exports.getListByTopicId = async (req, res) => {
     }
 };
 
+exports.getListByUserId = async (req, res) => {
+    try {
+        const posts = await postsService.getBookmarkedPostsByUser(req.user);
+        response.success(res, 200, posts);
+    } catch (err) {
+        response.error(res, 400, err.message);
+    }
+};
+
 exports.create = async (req, res) => {
     const post = await postsService.create(req.body);
     res.json(post);

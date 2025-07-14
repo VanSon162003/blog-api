@@ -1,7 +1,6 @@
 const { where } = require("sequelize");
 const { Post, Topic, User, Like } = require("../db/models");
 const likesService = require("./likes.service");
-const response = require("../utils/response");
 class PostsService {
     async getAll(currentUser) {
         try {
@@ -21,44 +20,7 @@ class PostsService {
                 ],
             });
 
-            const postIds = posts.map((post) => post.id);
-
-            const likes = await likesService.getAll({
-                where: {
-                    likeable_type: "Post",
-                    likeable_id: postIds,
-                },
-            });
-
-            const currentUserLikes = new Set();
-            const currentUserBookmark = new Set();
-
-            let result = [];
-
-            if (currentUser) {
-                likes.forEach((like) => {
-                    if (like.user_id === currentUser.id) {
-                        currentUserLikes.add(like.likeable_id);
-                    }
-                });
-
-                result = posts.map((post) => {
-                    if (post.usersBookmarked.length !== 0) {
-                        post.usersBookmarked.forEach((item) => {
-                            if (item.id === currentUser.id)
-                                currentUserBookmark.add(post.id);
-                        });
-                    }
-
-                    return {
-                        ...post.toJSON(),
-                        is_like: currentUserLikes.has(post.id),
-                        is_bookmark: currentUserBookmark.has(post.id),
-                    };
-                });
-            }
-
-            return !currentUser ? posts : result;
+            return this.handleLikeAndBookmarkFlags(posts, currentUser);
         } catch (error) {
             throw new Error("Get fail");
         }
@@ -85,47 +47,48 @@ class PostsService {
                 ],
             });
 
-            const postIds = posts.map((post) => post.id);
-
-            const likes = await likesService.getAll({
-                where: {
-                    likeable_type: "Post",
-                    likeable_id: postIds,
-                },
-            });
-
-            const currentUserLikes = new Set();
-            const currentUserBookmark = new Set();
-
-            let result = [];
-
-            if (currentUser) {
-                likes.forEach((like) => {
-                    if (like.user_id === currentUser.id) {
-                        currentUserLikes.add(like.likeable_id);
-                    }
-                });
-
-                result = posts.map((post) => {
-                    if (post.usersBookmarked.length !== 0) {
-                        post.usersBookmarked.forEach((item) => {
-                            if (item.id === currentUser.id)
-                                currentUserBookmark.add(post.id);
-                        });
-                    }
-
-                    return {
-                        ...post.toJSON(),
-                        is_like: currentUserLikes.has(post.id),
-                        is_bookmark: currentUserBookmark.has(post.id),
-                    };
-                });
-            }
-
-            return !currentUser ? posts : result;
+            return this.handleLikeAndBookmarkFlags(posts, currentUser);
         } catch (error) {
             throw new Error("TopicId invalid");
         }
+    }
+
+    async getBookmarkedPostsByUser(currentUser) {
+        if (!currentUser) throw new Error("Chưa đăng nhập");
+
+        const user = await User.findByPk(currentUser.id, {
+            include: [
+                {
+                    model: Post,
+                    as: "bookmarkedPosts",
+                    include: [
+                        {
+                            model: Topic,
+                            as: "topics",
+                        },
+                        {
+                            model: User,
+                            as: "user",
+                            attributes: [
+                                "id",
+                                "first_name",
+                                "last_name",
+                                "avatar",
+                            ],
+                        },
+                        {
+                            model: User,
+                            as: "usersBookmarked",
+                            attributes: ["id"],
+                        },
+                    ],
+                },
+            ],
+        });
+
+        const posts = user?.bookmarkedPosts || [];
+
+        return this.handleLikeAndBookmarkFlags(posts, currentUser);
     }
 
     async getById(id) {
@@ -136,6 +99,41 @@ class PostsService {
 
         return post;
     }
+
+    handleLikeAndBookmarkFlags = async (posts, currentUser) => {
+        if (!currentUser) return posts;
+
+        const postIds = posts.map((post) => post.id);
+
+        const likes = await likesService.getAll({
+            where: {
+                likeable_type: "Post",
+                likeable_id: postIds,
+            },
+        });
+
+        const currentUserLikes = new Set();
+        const currentUserBookmark = new Set();
+
+        likes.forEach((like) => {
+            if (like.user_id === currentUser.id) {
+                currentUserLikes.add(like.likeable_id);
+            }
+        });
+
+        return posts.map((post) => {
+            post.usersBookmarked?.forEach((item) => {
+                if (item.id === currentUser.id)
+                    currentUserBookmark.add(post.id);
+            });
+
+            return {
+                ...post.toJSON(),
+                is_like: currentUserLikes.has(post.id),
+                is_bookmark: currentUserBookmark.has(post.id),
+            };
+        });
+    };
 
     async create(data) {
         const post = await Post.create(data);
