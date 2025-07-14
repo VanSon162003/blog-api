@@ -71,6 +71,8 @@ module.exports = (sequelize, DataTypes) => {
     post.associate = (db) => {
         post.belongsToMany(db.Topic, {
             through: "post_topic",
+            foreignKey: "post_id",
+            otherKey: "topic_id",
             as: "topics",
         });
         post.belongsTo(db.User, {
@@ -89,6 +91,13 @@ module.exports = (sequelize, DataTypes) => {
                 likeable_type: "post",
             },
             as: "likes",
+        });
+
+        post.belongsToMany(db.User, {
+            through: "bookmarks",
+            foreignKey: "post_id",
+            otherKey: "user_id",
+            as: "usersBookmarked",
         });
     };
 

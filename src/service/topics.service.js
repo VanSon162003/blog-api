@@ -3,8 +3,12 @@ const { Topic } = require("../db/models");
 
 class TopicsService {
     async getAll() {
-        const topics = await Topic.findAll();
-        return topics;
+        try {
+            const topics = await Topic.findAll();
+            return topics;
+        } catch (error) {
+            throw new Error("không thể lấy danh sách topic");
+        }
     }
 
     async getById(id) {
@@ -14,9 +18,13 @@ class TopicsService {
     }
 
     async getBySlug(slug) {
-        const topic = await Topic.findOne({ where: { slug } });
+        try {
+            const topic = await Topic.findOne({ where: { slug } });
 
-        return topic;
+            return topic;
+        } catch (error) {
+            throw new Error("Invalid slug");
+        }
     }
 
     async create(data) {

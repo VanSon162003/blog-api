@@ -1,12 +1,22 @@
 const topicsService = require("../service/topics.service");
+const response = require("../utils/response");
 exports.getList = async (req, res) => {
-    const topics = await topicsService.getAll();
-    res.json({ data: topics });
+    try {
+        const topics = await topicsService.getAll();
+
+        response.success(res, 200, topics);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
 };
 
 exports.getBySlug = async (req, res) => {
-    const topic = await topicsService.getBySlug(req.params.slug);
-    res.json(topic);
+    try {
+        const topic = await topicsService.getBySlug(req.params.slug);
+        response.success(res, 200, topic);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
 };
 
 exports.getOne = async (req, res) => {

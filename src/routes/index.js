@@ -8,7 +8,9 @@ const pusherRouter = require("./pusher.route");
 const conversationRouter = require("./conversations.route");
 const messagesRouter = require("./messages.route");
 const likesRouter = require("./likes.routes");
+const bookmarksRouter = require("./bookmarks.routes");
 
+router.use("/bookmarks", bookmarksRouter);
 router.use("/likes", likesRouter);
 router.use("/messages", messagesRouter);
 router.use("/conversation", conversationRouter);

@@ -34,6 +34,8 @@ module.exports = (sequelize, DataTypes) => {
     topic.associate = (db) => {
         topic.belongsToMany(db.Post, {
             through: "post_topic",
+            foreignKey: "topic_id",
+            otherKey: "post_id",
             as: "posts",
         });
     };

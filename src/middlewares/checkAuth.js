@@ -7,7 +7,7 @@ async function checkAuth(req, res, next) {
         const token = req.headers?.authorization?.replace("Bearer ", "");
 
         if (!token) {
-            return response.error(res, 401, "Token không được cung cấp");
+            throw new Error("Token không được cung cấp");
         }
 
         const payload = jwtService.verifyAccessToken(token);
@@ -24,7 +24,7 @@ async function checkAuth(req, res, next) {
         req.user = user;
         next();
     } catch (error) {
-        return response.error(res, 401, "Token không hợp lệ");
+        next();
     }
 }
 

@@ -30,7 +30,11 @@ const login = async (req, res) => {
 };
 
 const me = async (req, res) => {
-    response.success(res, 200, req.user);
+    if (!req.user) {
+        return response.error(res, 401, "Token invalid");
+    }
+
+    return response.success(res, 200, req.user);
 };
 
 const refreshToken = async (req, res) => {
