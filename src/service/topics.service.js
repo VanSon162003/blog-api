@@ -7,7 +7,7 @@ class TopicsService {
             const topics = await Topic.findAll();
             return topics;
         } catch (error) {
-            throw new Error("không thể lấy danh sách topic");
+            throw new Error("Unable to fetch the list of topics.");
         }
     }
 

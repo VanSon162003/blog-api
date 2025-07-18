@@ -75,6 +75,14 @@ module.exports = (sequelize, DataTypes) => {
             otherKey: "topic_id",
             as: "topics",
         });
+
+        post.belongsToMany(db.Tag, {
+            through: "post_tag",
+            foreignKey: "post_id",
+            otherKey: "tag_id",
+            as: "tags",
+        });
+
         post.belongsTo(db.User, {
             foreignKey: "user_id",
             as: "user",
@@ -84,6 +92,7 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "post_id",
             as: "comments",
         });
+
         post.hasMany(db.Like, {
             foreignKey: "likeable_id",
             constraints: false,

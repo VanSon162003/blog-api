@@ -1,6 +1,67 @@
 const { where } = require("sequelize");
-const { Post, Topic, User, Like } = require("../db/models");
+const { Post, Topic, User, Like, Comment, Tag } = require("../db/models");
+const { Op, Sequelize } = require("sequelize");
 const likesService = require("./likes.service");
+
+// {
+//                         model: Comment,
+//                         as: "comments",
+//                         where: { deleted_at: null, parent_id: null },
+//                         attributes: [
+//                             "id",
+//                             "user_id",
+//                             "post_id",
+//                             "parent_id",
+//                             "content",
+//                             "like_count",
+//                             "deleted_at",
+//                             "created_at",
+//                             "updated_at",
+//                         ],
+//                         include: [
+//                             {
+//                                 model: User,
+//                                 as: "user",
+//                                 attributes: [
+//                                     "id",
+//                                     "avatar",
+//                                     "first_name",
+//                                     "last_name",
+//                                     "email",
+//                                     "username",
+//                                 ],
+//                             },
+//                             {
+//                                 model: Comment,
+//                                 as: "replies",
+//                                 attributes: [
+//                                     "id",
+//                                     "user_id",
+//                                     "post_id",
+//                                     "parent_id",
+//                                     "content",
+//                                     "like_count",
+//                                     "deleted_at",
+//                                     "created_at",
+//                                     "updated_at",
+//                                 ],
+//                                 include: [
+//                                     {
+//                                         model: User,
+//                                         as: "user",
+//                                         attributes: [
+//                                             "id",
+//                                             "avatar",
+//                                             "first_name",
+//                                             "last_name",
+//                                             "email",
+//                                             "username",
+//                                         ],
+//                                     },
+//                                 ],
+//                             },
+//                         ],
+//                     },
 class PostsService {
     async getAll(currentUser) {
         try {
@@ -23,6 +84,41 @@ class PostsService {
             return this.handleLikeAndBookmarkFlags(posts, currentUser);
         } catch (error) {
             throw new Error("Get fail");
+        }
+    }
+
+    async getBySlug(slug, currentUser) {
+        try {
+            const post = await Post.findOne({
+                where: { slug },
+                include: [
+                    {
+                        model: User,
+                        as: "user",
+                    },
+                    {
+                        model: User,
+                        as: "usersBookmarked",
+                        attributes: ["id"],
+                        through: { attributes: [] },
+                    },
+                    {
+                        model: Topic,
+                        as: "topics",
+                    },
+                    {
+                        model: Tag,
+                        as: "tags",
+                    },
+                ],
+            });
+
+            if (!post) throw new Error("Post not found");
+
+            return this.handleLikeAndBookmarkFlags([post], currentUser);
+        } catch (error) {
+            console.error(error);
+            throw new Error("Get fail by slug");
         }
     }
 
@@ -54,7 +150,8 @@ class PostsService {
     }
 
     async getBookmarkedPostsByUser(currentUser) {
-        if (!currentUser) throw new Error("Chưa đăng nhập");
+        if (!currentUser)
+            throw new Error("You must be logged in to access this.");
 
         const user = await User.findByPk(currentUser.id, {
             include: [
@@ -100,17 +197,118 @@ class PostsService {
         return post;
     }
 
+    async getRelatedPosts(currentPostId, currentUser) {
+        const currentPostTopic = await Post.findByPk(currentPostId, {
+            include: {
+                model: Topic,
+                as: "topics",
+                through: { attributes: [] },
+            },
+        });
+
+        if (!currentPostTopic) throw new Error("post not found");
+
+        const topicIds = currentPostTopic.topics.map((item) => item.id);
+
+        if (topicIds.length === 0) {
+            const posts = await Post.findAll({
+                where: { id: { [Op.not]: currentPostId } },
+                limit: 3,
+                order: Sequelize.literal("RAND()"),
+
+                include: [
+                    { model: Topic, as: "topics" },
+                    {
+                        model: User,
+                        as: "user",
+                        attributes: ["id", "avatar", "first_name", "last_name"],
+                    },
+                    {
+                        model: User,
+                        as: "usersBookmarked",
+                        attributes: ["id"],
+                    },
+                ],
+            });
+
+            return this.handleLikeAndBookmarkFlags(posts, currentUser);
+        }
+
+        const postByTopics = await Post.findAll({
+            where: { id: { [Op.not]: currentPostId } },
+            include: [
+                {
+                    model: Topic,
+                    as: "topics",
+                    through: { attributes: [] },
+
+                    where: {
+                        id: topicIds,
+                    },
+                },
+                {
+                    model: User,
+                    as: "user",
+                    attributes: ["id", "avatar", "first_name", "last_name"],
+                },
+                {
+                    model: User,
+                    as: "usersBookmarked",
+                    attributes: ["id"],
+                },
+            ],
+
+            limit: 3,
+            order: Sequelize.literal("RAND()"),
+        });
+
+        if (postByTopics.length >= 3) {
+            return this.handleLikeAndBookmarkFlags(postByTopics, currentUser);
+        }
+
+        const existingIds = postByTopics.map((item) => item.id);
+        const excludeIds = [currentPostId, ...existingIds];
+
+        const morePosts = Post.findAll({
+            where: { id: { [Op.not]: excludeIds } },
+            include: [
+                {
+                    model: Topic,
+                    as: "topics",
+                    through: { attributes: [] },
+
+                    where: {
+                        id: topicIds,
+                    },
+                },
+                {
+                    model: User,
+                    as: "user",
+                    attributes: ["id", "avatar", "first_name", "last_name"],
+                },
+                {
+                    model: User,
+                    as: "usersBookmarked",
+                    attributes: ["id"],
+                },
+            ],
+
+            limit: 3 - postByTopics.length,
+            order: Sequelize.literal("RAND()"),
+        });
+
+        return this.handleLikeAndBookmarkFlags(
+            [...morePosts, ...postByTopics],
+            currentUser
+        );
+    }
+
     handleLikeAndBookmarkFlags = async (posts, currentUser) => {
         if (!currentUser) return posts;
 
         const postIds = posts.map((post) => post.id);
 
-        const likes = await likesService.getAll({
-            where: {
-                likeable_type: "Post",
-                likeable_id: postIds,
-            },
-        });
+        const likes = await likesService.getAll("Post", postIds);
 
         const currentUserLikes = new Set();
         const currentUserBookmark = new Set();
@@ -141,9 +339,10 @@ class PostsService {
     }
 
     async toggleLike(currentUser, postId) {
-        if (!currentUser) throw new Error("Cần đăng nhập để thả tim");
+        if (!currentUser)
+            throw new Error("You must be logged in to like this post.");
 
-        const [like, create] = await Like.findOrCreate({
+        const [like, created] = await Like.findOrCreate({
             where: {
                 likeable_id: postId,
                 user_id: currentUser.id,
@@ -151,10 +350,19 @@ class PostsService {
             },
         });
 
-        if (!create) {
+        const post = await Post.findByPk(postId);
+
+        if (!post) throw new Error("Post not found");
+
+        if (!created) {
             await like.destroy();
+            post.likes_count = Math.max(0, (post.likes_count ?? 0) - 1);
+            await post.save();
             return false;
         }
+
+        post.likes_count = (post.likes_count ?? 0) + 1;
+        await post.save();
         return true;
     }
 

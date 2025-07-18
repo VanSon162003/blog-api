@@ -5,6 +5,10 @@ const jwtService = require("./jwt.service");
 const refreshTokenService = require("./refreshToken.service");
 
 const register = async (data) => {
+    const check = await checkUserEmail(data.email);
+
+    if (check) throw new Error("Email already exists.");
+
     const user = await User.create({
         ...data,
         password: await hash(data.password),
@@ -21,16 +25,27 @@ const register = async (data) => {
     };
 };
 
+const checkUserEmail = async (email) => {
+    const user = await User.findOne({
+        where: {
+            email,
+        },
+    });
+
+    if (user) return true;
+    return false;
+};
+
 const login = async (email, password) => {
     const user = await User.findOne({ where: { email }, raw: true });
     if (!user) {
-        throw new Error("Thông tin đăng nhập không hợp lệ.");
+        throw new Error("Invalid login credentials.");
     }
 
     const isValid = await compare(password, user.password);
 
     if (!isValid) {
-        throw new Error("Thông tin đăng nhập không hợp lệ.");
+        throw new Error("Invalid login credentials.");
     }
 
     const tokenData = jwtService.generateAccessToken(user.id);
@@ -50,7 +65,7 @@ const forgotPassword = async (email) => {
     });
 
     if (!user) {
-        throw new Error("Email Không tồn tại");
+        throw new Error("Email do not exit");
     }
 
     await User.update({ verified_at: null }, { where: { id: user.id } });
@@ -67,12 +82,12 @@ const resetPassword = async (data) => {
     console.log(user);
 
     if (!user) {
-        throw new Error("Thông tin đăng nhập không hợp lệ.");
+        throw new Error("Invalid login credentials.");
     }
 
-    const isValid = await compare(password, user.password);
+    // const isValid = await compare(password, user.password);
 
-    if (isValid) throw new Error("Vui lòng nhập mật khẩu khác");
+    // if (isValid) throw new Error("Vui lòng nhập mật khẩu khác");
 
     try {
         await User.update(
@@ -130,7 +145,7 @@ const refreshAccessToken = async (refreshTokenString) => {
     );
 
     if (!refreshToken) {
-        throw new Error("Refresh token không hợp lệ");
+        throw new Error("Refresh invalid");
     }
 
     const tokenData = jwtService.generateAccessToken(refreshToken.user_id);
@@ -154,4 +169,5 @@ module.exports = {
     verifyEmail,
     verifyToken,
     resetPassword,
+    checkUserEmail,
 };

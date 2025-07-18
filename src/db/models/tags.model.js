@@ -15,5 +15,14 @@ module.exports = (sequelize, DataTypes) => {
         }
     );
 
+    tag.associate = (db) => {
+        tag.belongsToMany(db.Post, {
+            through: "post_tag",
+            foreignKey: "tag_id",
+            otherKey: "post_id",
+            as: "posts",
+        });
+    };
+
     return tag;
 };

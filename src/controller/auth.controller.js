@@ -56,7 +56,7 @@ const forgotPassword = async (req, res) => {
 
         res.status(201).send("");
     } catch (error) {
-        throw new Error("Email không tồn tại");
+        throw new Error("Email do not exit");
     }
 };
 
@@ -81,7 +81,7 @@ const verifyEmail = async (req, res) => {
 
         res.status(201).send("");
     } catch (error) {
-        throw new Error("Token không tồn tại");
+        throw new Error("Token do not exit");
     }
 };
 
@@ -93,7 +93,7 @@ const verifyToken = async (req, res) => {
             data: verify,
         });
     } catch (error) {
-        throw new Error("Token không hợp lệ");
+        throw new Error("Token invalid");
     }
 };
 

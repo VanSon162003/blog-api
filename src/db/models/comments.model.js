@@ -36,6 +36,10 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.TEXT,
                 allowNull: false,
             },
+            like_count: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
+            },
             deleted_at: {
                 type: DataTypes.DATE,
                 defaultValue: null,
@@ -65,6 +69,11 @@ module.exports = (sequelize, DataTypes) => {
                 likeable_type: "comment",
             },
             as: "likes",
+        });
+
+        comment.hasMany(db.Comment, {
+            foreignKey: "parent_id",
+            as: "replies",
         });
     };
 

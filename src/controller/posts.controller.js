@@ -11,6 +11,16 @@ exports.getList = async (req, res) => {
     }
 };
 
+exports.getBySlug = async (req, res) => {
+    try {
+        const posts = await postsService.getBySlug(req.params.slug, req.user);
+
+        response.success(res, 200, posts);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};
+
 exports.getListByTopicId = async (req, res) => {
     try {
         const posts = await postsService.getListByTopicId(
@@ -27,6 +37,19 @@ exports.getListByTopicId = async (req, res) => {
 exports.getListByUserId = async (req, res) => {
     try {
         const posts = await postsService.getBookmarkedPostsByUser(req.user);
+        response.success(res, 200, posts);
+    } catch (err) {
+        response.error(res, 400, err.message);
+    }
+};
+
+exports.getRelatedPosts = async (req, res) => {
+    try {
+        const posts = await postsService.getRelatedPosts(
+            req.params.postId,
+            req.user
+        );
+
         response.success(res, 200, posts);
     } catch (err) {
         response.error(res, 400, err.message);

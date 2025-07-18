@@ -7,18 +7,26 @@ async function checkAuth(req, res, next) {
         const token = req.headers?.authorization?.replace("Bearer ", "");
 
         if (!token) {
-            throw new Error("Token không được cung cấp");
+            throw new Error("Token was not provided");
         }
 
         const payload = jwtService.verifyAccessToken(token);
 
         const user = await User.findOne({
-            attributes: ["id", "email", "avatar", "created_at"],
+            attributes: [
+                "id",
+                "email",
+                "avatar",
+                "first_name",
+                "last_name",
+                "username",
+                "created_at",
+            ],
             where: { id: payload.userId },
         });
 
         if (!user) {
-            return response.error(res, 401, "User không tồn tại");
+            return response.error(res, 401, "User does not exist");
         }
 
         req.user = user;

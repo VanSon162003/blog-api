@@ -2,10 +2,11 @@ const { where } = require("sequelize");
 const { Like, Post } = require("../db/models");
 
 class LikesService {
-    async getAll() {
+    async getAll(type, id) {
         const likes = await Like.findAll({
             where: {
-                likeable_type: "Post",
+                likeable_type: type,
+                likeable_id: id,
             },
         });
         return likes;
