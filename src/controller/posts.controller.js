@@ -21,6 +21,19 @@ exports.getBySlug = async (req, res) => {
     }
 };
 
+exports.getByUserName = async (req, res) => {
+    try {
+        const posts = await postsService.getByUserName(
+            req.params.username,
+            req.user
+        );
+
+        response.success(res, 200, posts);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};
+
 exports.getListByTopicId = async (req, res) => {
     try {
         const posts = await postsService.getListByTopicId(

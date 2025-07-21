@@ -2,6 +2,7 @@ const { where } = require("sequelize");
 const { Post, Topic, User, Like, Comment, Tag } = require("../db/models");
 const { Op, Sequelize } = require("sequelize");
 const likesService = require("./likes.service");
+const usersService = require("./users.service");
 
 // {
 //                         model: Comment,
@@ -71,7 +72,14 @@ class PostsService {
                     {
                         model: User,
                         as: "user",
-                        attributes: ["id", "avatar", "first_name", "last_name"],
+                        attributes: [
+                            "id",
+                            "avatar",
+                            "username",
+                            "fullname",
+                            "first_name",
+                            "last_name",
+                        ],
                     },
                     {
                         model: User,
@@ -120,6 +128,38 @@ class PostsService {
             console.error(error);
             throw new Error("Get fail by slug");
         }
+    }
+
+    async getByUserName(username, currentUser) {
+        const user = await usersService.getUserByUsername(username);
+
+        const posts = await Post.findAll({
+            where: {
+                user_id: user.id,
+            },
+            include: [
+                { model: Topic, as: "topics" },
+                {
+                    model: User,
+                    as: "user",
+                    attributes: [
+                        "id",
+                        "avatar",
+                        "username",
+                        "fullname",
+                        "first_name",
+                        "last_name",
+                    ],
+                },
+                {
+                    model: User,
+                    as: "usersBookmarked",
+                    attributes: ["id"],
+                },
+            ],
+        });
+
+        return this.handleLikeAndBookmarkFlags(posts, currentUser);
     }
 
     async getListByTopicId(currentUser, topicId) {
@@ -221,7 +261,13 @@ class PostsService {
                     {
                         model: User,
                         as: "user",
-                        attributes: ["id", "avatar", "first_name", "last_name"],
+                        attributes: [
+                            "id",
+                            "avatar",
+                            "first_name",
+                            "fullname",
+                            "last_name",
+                        ],
                     },
                     {
                         model: User,
@@ -249,7 +295,13 @@ class PostsService {
                 {
                     model: User,
                     as: "user",
-                    attributes: ["id", "avatar", "first_name", "last_name"],
+                    attributes: [
+                        "id",
+                        "avatar",
+                        "first_name",
+                        "fullname",
+                        "last_name",
+                    ],
                 },
                 {
                     model: User,
@@ -284,7 +336,13 @@ class PostsService {
                 {
                     model: User,
                     as: "user",
-                    attributes: ["id", "avatar", "first_name", "last_name"],
+                    attributes: [
+                        "id",
+                        "avatar",
+                        "fullname",
+                        "first_name",
+                        "last_name",
+                    ],
                 },
                 {
                     model: User,

@@ -9,8 +9,12 @@ const { sequelize } = require("./src/db/models");
 const notFoundHandle = require("./src/middlewares/errors/notFoundHandle");
 const errorHandler = require("./src/middlewares/errors/erorrHandle");
 
+const path = require("path");
+
 const app = express();
 const port = 3001;
+
+app.use("/api/v1/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(cors());
 app.use(express.static("public"));

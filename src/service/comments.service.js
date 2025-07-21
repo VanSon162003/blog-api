@@ -23,6 +23,7 @@ class CommentsService {
                 "parent_id",
                 "content",
                 "like_count",
+                "edited_at",
                 "deleted_at",
                 "created_at",
                 "updated_at",
@@ -34,6 +35,7 @@ class CommentsService {
                     attributes: [
                         "id",
                         "avatar",
+                        "fullname",
                         "first_name",
                         "last_name",
                         "email",
@@ -62,6 +64,7 @@ class CommentsService {
                                 "id",
                                 "avatar",
                                 "first_name",
+                                "fullname",
                                 "last_name",
                                 "email",
                                 "username",
@@ -192,6 +195,7 @@ class CommentsService {
                     attributes: [
                         "id",
                         "avatar",
+                        "fullname",
                         "first_name",
                         "last_name",
                         "email",
@@ -219,6 +223,7 @@ class CommentsService {
                             attributes: [
                                 "id",
                                 "avatar",
+                                "fullname",
                                 "first_name",
                                 "last_name",
                                 "email",
@@ -234,8 +239,6 @@ class CommentsService {
     }
 
     async update(id, data, currentUser) {
-        console.log(id, data);
-
         if (!currentUser)
             throw new Error("You must be logged in to edit comment this post.");
 

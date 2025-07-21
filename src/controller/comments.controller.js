@@ -37,8 +37,6 @@ exports.toggleLike = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-    console.log(req.body);
-
     try {
         const comment = await commentsService.create(req.user, req.body);
         response.success(res, 200, comment);
@@ -48,13 +46,17 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-    const comment = await commentsService.update(
-        req.params.id,
-        req.body,
-        req.user
-    );
+    try {
+        const comment = await commentsService.update(
+            req.params.id,
+            req.body,
+            req.user
+        );
 
-    res.json(comment);
+        response.success(res, 200, comment);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
 };
 
 exports.remove = async (req, res) => {

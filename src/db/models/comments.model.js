@@ -44,6 +44,10 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.DATE,
                 defaultValue: null,
             },
+            edited_at: {
+                type: DataTypes.DATE,
+                defaultValue: null,
+            },
         },
         {
             tableName: "comments",

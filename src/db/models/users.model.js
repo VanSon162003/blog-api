@@ -31,6 +31,10 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 unique: true,
             },
+            fullname: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
             avatar: {
                 type: DataTypes.STRING,
                 defaultValue: null,
@@ -76,6 +80,42 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.DATE,
                 defaultValue: null,
             },
+
+            location: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
+            skills: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                get() {
+                    const raw = this.getDataValue("skills");
+                    return raw ? JSON.parse(raw) : [];
+                },
+                set(value) {
+                    this.setDataValue("skills", JSON.stringify(value));
+                },
+            },
+            privacy: {
+                type: DataTypes.JSON,
+                allowNull: false,
+                defaultValue: {
+                    profileVisibility: "public",
+                    showEmail: false,
+                    showFollowersCount: true,
+                    showFollowingCount: true,
+                    allowDirectMessages: true,
+                    showOnlineStatus: true,
+                },
+            },
+            badges: {
+                type: DataTypes.JSON,
+                allowNull: true,
+            },
+            cover_image: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
         },
         {
             tableName: "users",
@@ -83,6 +123,18 @@ module.exports = (sequelize, DataTypes) => {
             timestamps: true,
         }
     );
+
+    user.beforeCreate((user, options) => {
+        if (user.first_name && user.last_name) {
+            user.fullname = `${user.first_name} ${user.last_name}`;
+        }
+    });
+
+    user.beforeUpdate((user, options) => {
+        if (user.first_name && user.last_name) {
+            user.fullname = `${user.first_name} ${user.last_name}`;
+        }
+    });
 
     user.associate = (db) => {
         user.hasMany(db.Post, {
