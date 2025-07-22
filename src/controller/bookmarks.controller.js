@@ -9,6 +9,17 @@ exports.create = async (req, res) => {
 
         response.success(res, 200, bookmark);
     } catch (error) {
+        response.error(res, 400, error);
+    }
+};
+
+exports.remove = async (req, res) => {
+    try {
+        await bookmarksService.remove(req.user, req.body);
+        response.success(res, 204, "");
+    } catch (error) {
+        console.log(error);
+
         response.error(res, 400, error.message);
     }
 };

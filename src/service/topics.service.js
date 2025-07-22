@@ -1,6 +1,9 @@
 const { where } = require("sequelize");
 const { Topic } = require("../db/models");
 
+const slugify = require("slugify");
+const { faker } = require("@faker-js/faker");
+
 class TopicsService {
     async getAll() {
         try {
@@ -32,6 +35,28 @@ class TopicsService {
         return topic;
     }
 
+    async findOrCreate(name) {
+        const baseSlug = slugify(name, { lower: true, strict: true });
+        let slug = baseSlug;
+        let counter = 1;
+
+        while (await Topic.findOne({ where: { slug } })) {
+            slug = `${baseSlug}-${counter++}`;
+        }
+
+        const [topic, created] = await Topic.findOrCreate({
+            where: { name },
+            defaults: {
+                name,
+                slug,
+                image: faker.image.urlPicsumPhotos(),
+                description: faker.lorem.sentence(),
+                posts_count: 0,
+            },
+        });
+
+        return { topic, created };
+    }
     async update(id, data) {
         try {
             await Topic.update(data, {

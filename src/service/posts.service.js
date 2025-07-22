@@ -3,6 +3,9 @@ const { Post, Topic, User, Like, Comment, Tag } = require("../db/models");
 const { Op, Sequelize } = require("sequelize");
 const likesService = require("./likes.service");
 const usersService = require("./users.service");
+const { Json } = require("sequelize/lib/utils");
+const topicsService = require("./topics.service");
+const slugify = require("slugify");
 
 // {
 //                         model: Comment,
@@ -67,6 +70,43 @@ class PostsService {
     async getAll(currentUser) {
         try {
             const posts = await Post.findAll({
+                include: [
+                    { model: Topic, as: "topics" },
+                    {
+                        model: User,
+                        as: "user",
+                        attributes: [
+                            "id",
+                            "avatar",
+                            "username",
+                            "fullname",
+                            "first_name",
+                            "last_name",
+                        ],
+                    },
+                    {
+                        model: User,
+                        as: "usersBookmarked",
+                        attributes: ["id"],
+                    },
+                ],
+            });
+
+            return this.handleLikeAndBookmarkFlags(posts, currentUser);
+        } catch (error) {
+            throw new Error("Get fail");
+        }
+    }
+
+    async getListByMe(currentUser) {
+        if (!currentUser)
+            throw new Error("You must be logged in to view posts.");
+
+        try {
+            const posts = await Post.findAll({
+                where: {
+                    user_id: currentUser.id,
+                },
                 include: [
                     { model: Topic, as: "topics" },
                     {
@@ -198,6 +238,9 @@ class PostsService {
                 {
                     model: Post,
                     as: "bookmarkedPosts",
+                    through: {
+                        attributes: ["id", "createdAt", "post_id", "user_id"],
+                    },
                     include: [
                         {
                             model: Topic,
@@ -222,6 +265,8 @@ class PostsService {
                 },
             ],
         });
+
+        console.log(user?.bookmarkedPosts);
 
         const posts = user?.bookmarkedPosts || [];
 
@@ -391,8 +436,57 @@ class PostsService {
         });
     };
 
-    async create(data) {
-        const post = await Post.create(data);
+    async create(thumbnailPath, data, currentUser) {
+        if (!currentUser) throw new Error("You must be logged to edit");
+
+        const updateData = {};
+
+        if (thumbnailPath) {
+            updateData.thumbnail = thumbnailPath?.path.replace(/\\/g, "/");
+        }
+
+        if (!data.published_at) {
+            updateData.published_at = Date.now();
+        }
+
+        const { topics, ...remain } = data;
+        const newData = { ...updateData, ...remain };
+
+        const baseSlug = slugify(newData.title, { lower: true, strict: true });
+        let slug = baseSlug;
+        let counter = 1;
+
+        while (await Post.findOne({ where: { slug } })) {
+            slug = `${baseSlug}-${counter++}`;
+        }
+
+        const post = await Post.create({
+            ...newData,
+            slug,
+            user_id: currentUser.id,
+        });
+
+        const newTopics = JSON.parse(topics);
+        await Promise.all(
+            newTopics.map(async (item) => {
+                const { topic, created } = await topicsService.findOrCreate(
+                    item
+                );
+
+                if (!created) {
+                    topic.posts_count += 1;
+                    await topic.save();
+                }
+
+                await post.addTopic(topic.id);
+            })
+        );
+
+        // tăng post count của user vừa tạo
+
+        currentUser.posts_count = currentUser.posts_count + 1;
+        await currentUser.save();
+
         return post;
     }
 

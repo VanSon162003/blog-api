@@ -11,6 +11,16 @@ exports.getList = async (req, res) => {
     }
 };
 
+exports.getListByMe = async (req, res) => {
+    try {
+        const posts = await postsService.getListByMe(req.user);
+
+        response.success(res, 200, posts);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};
+
 exports.getBySlug = async (req, res) => {
     try {
         const posts = await postsService.getBySlug(req.params.slug, req.user);
@@ -70,8 +80,12 @@ exports.getRelatedPosts = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-    const post = await postsService.create(req.body);
-    res.json(post);
+    try {
+        const post = await postsService.create(req.file, req.body, req.user);
+        response.success(res, 200, post);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
 };
 
 exports.toggleLike = async (req, res) => {
