@@ -22,6 +22,7 @@ class UsersService {
         const userFollowing = await User.findOne({
             where: { id: currentUser.id },
         });
+
         const userFollower = await User.findOne({ where: { id: userId } });
 
         const hasFollowingUser = await currentUser.hasFollowing(userId);
@@ -33,7 +34,7 @@ class UsersService {
             );
             userFollower.follower_count = Math.max(
                 0,
-                (userFollowing.follower_count ?? 0) - 1
+                (userFollower.follower_count ?? 0) - 1
             );
 
             await userFollower.save();

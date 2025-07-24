@@ -9,7 +9,9 @@ exports.create = async (req, res) => {
 
         response.success(res, 200, bookmark);
     } catch (error) {
-        response.error(res, 400, error);
+        console.log(error);
+
+        response.error(res, 400, error.message);
     }
 };
 

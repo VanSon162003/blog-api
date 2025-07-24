@@ -98,7 +98,6 @@ module.exports = (sequelize, DataTypes) => {
             },
             privacy: {
                 type: DataTypes.JSON,
-                allowNull: false,
                 defaultValue: {
                     profileVisibility: "public",
                     showEmail: false,

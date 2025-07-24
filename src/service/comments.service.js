@@ -45,6 +45,10 @@ class CommentsService {
                 {
                     model: Comment,
                     as: "replies",
+                    where: {
+                        deleted_at: null,
+                    },
+                    required: false,
                     attributes: [
                         "id",
                         "user_id",
@@ -53,9 +57,12 @@ class CommentsService {
                         "content",
                         "like_count",
                         "deleted_at",
+                        "edited_at",
+
                         "created_at",
                         "updated_at",
                     ],
+
                     include: [
                         {
                             model: User,

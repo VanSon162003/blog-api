@@ -15,6 +15,7 @@ router.get("/user/:username", checkAuth, postsController.getByUserName);
 router.post("/", upload.single("thumbnail"), checkAuth, postsController.create);
 router.post("/:postId/like", checkAuth, postsController.toggleLike);
 router.put("/:id", postsController.update);
+
 router.delete("/:id", postsController.remove);
 
 module.exports = router;

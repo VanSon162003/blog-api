@@ -7,69 +7,65 @@ const { Json } = require("sequelize/lib/utils");
 const topicsService = require("./topics.service");
 const slugify = require("slugify");
 
-// {
-//                         model: Comment,
-//                         as: "comments",
-//                         where: { deleted_at: null, parent_id: null },
-//                         attributes: [
-//                             "id",
-//                             "user_id",
-//                             "post_id",
-//                             "parent_id",
-//                             "content",
-//                             "like_count",
-//                             "deleted_at",
-//                             "created_at",
-//                             "updated_at",
-//                         ],
-//                         include: [
-//                             {
-//                                 model: User,
-//                                 as: "user",
-//                                 attributes: [
-//                                     "id",
-//                                     "avatar",
-//                                     "first_name",
-//                                     "last_name",
-//                                     "email",
-//                                     "username",
-//                                 ],
-//                             },
-//                             {
-//                                 model: Comment,
-//                                 as: "replies",
-//                                 attributes: [
-//                                     "id",
-//                                     "user_id",
-//                                     "post_id",
-//                                     "parent_id",
-//                                     "content",
-//                                     "like_count",
-//                                     "deleted_at",
-//                                     "created_at",
-//                                     "updated_at",
-//                                 ],
-//                                 include: [
-//                                     {
-//                                         model: User,
-//                                         as: "user",
-//                                         attributes: [
-//                                             "id",
-//                                             "avatar",
-//                                             "first_name",
-//                                             "last_name",
-//                                             "email",
-//                                             "username",
-//                                         ],
-//                                     },
-//                                 ],
-//                             },
-//                         ],
-//                     },
 class PostsService {
+    canUserViewPost(post, currentUser, followingIds = []) {
+        if (!currentUser) {
+            return post.visibility === "public" || !post.visibility;
+        }
+
+        if (post.user_id === currentUser.id) {
+            return true;
+        }
+
+        if (post.visibility === "public" || !post.visibility) {
+            return true;
+        }
+
+        if (post.visibility === "followers") {
+            return followingIds.includes(post.user_id);
+        }
+
+        if (post.visibility === "private") {
+            return false;
+        }
+
+        return false;
+    }
+
+    async getUserFollowingIds(currentUser) {
+        try {
+            if (!currentUser) return [];
+
+            const userFollowing = await User.findByPk(currentUser.id, {
+                include: {
+                    model: User,
+                    as: "following",
+                    attributes: ["id"],
+                    through: { attributes: [] },
+                },
+            });
+
+            if (!userFollowing || !userFollowing.following) {
+                return [];
+            }
+
+            const ids = userFollowing.following.map((item) => item.id);
+            return ids;
+        } catch (error) {
+            console.log(error);
+            return [];
+        }
+    }
+
     async getAll(currentUser) {
         try {
             const posts = await Post.findAll({
+                where: {
+                    status: "published",
+                    published_at: {
+                        [Op.lte]: new Date(),
+                    },
+                },
                 include: [
                     { model: Topic, as: "topics" },
                     {
@@ -90,9 +86,16 @@ class PostsService {
                         attributes: ["id"],
                     },
                 ],
+                order: [["created_at", "DESC"]],
             });
 
-            return this.handleLikeAndBookmarkFlags(posts, currentUser);
+            const followingIds = await this.getUserFollowingIds(currentUser);
+
+            const postVisible = posts.filter((post) =>
+                this.canUserViewPost(post, currentUser, followingIds)
+            );
+
+            return this.handleLikeAndBookmarkFlags(postVisible, currentUser);
         } catch (error) {
             throw new Error("Get fail");
         }
@@ -138,7 +141,13 @@ class PostsService {
     async getBySlug(slug, currentUser) {
         try {
             const post = await Post.findOne({
-                where: { slug },
+                where: {
+                    slug,
+                    status: "published",
+                    published_at: {
+                        [Op.lte]: new Date(),
+                    },
+                },
                 include: [
                     {
                         model: User,
@@ -163,6 +172,17 @@ class PostsService {
 
             if (!post) throw new Error("Post not found");
 
+            const followingIds = await this.getUserFollowingIds(currentUser);
+
+            const canView = this.canUserViewPost(
+                post,
+                currentUser,
+                followingIds
+            );
+
+            if (!canView)
+                throw new Error("You don't have permission to view this post");
+
             return this.handleLikeAndBookmarkFlags([post], currentUser);
         } catch (error) {
             console.error(error);
@@ -173,9 +193,15 @@ class PostsService {
     async getByUserName(username, currentUser) {
         const user = await usersService.getUserByUsername(username);
 
+        if (!user) throw new Error("Not found user by username");
+
         const posts = await Post.findAll({
             where: {
                 user_id: user.id,
+                status: "published",
+                published_at: {
+                    [Op.lte]: new Date(),
+                },
             },
             include: [
                 { model: Topic, as: "topics" },
@@ -199,12 +225,24 @@ class PostsService {
             ],
         });
 
-        return this.handleLikeAndBookmarkFlags(posts, currentUser);
+        const followingIds = await this.getUserFollowingIds(currentUser);
+
+        const postVisible = posts.filter((post) =>
+            this.canUserViewPost(post, currentUser, followingIds)
+        );
+
+        return this.handleLikeAndBookmarkFlags(postVisible, currentUser);
     }
 
     async getListByTopicId(currentUser, topicId) {
         try {
             const posts = await Post.findAll({
+                where: {
+                    status: "published",
+                    published_at: {
+                        [Op.lte]: new Date(),
+                    },
+                },
                 include: [
                     {
                         model: Topic,
@@ -223,7 +261,13 @@ class PostsService {
                 ],
             });
 
-            return this.handleLikeAndBookmarkFlags(posts, currentUser);
+            const followingIds = await this.getUserFollowingIds(currentUser);
+
+            const postVisible = posts.filter((post) =>
+                this.canUserViewPost(post, currentUser, followingIds)
+            );
+
+            return this.handleLikeAndBookmarkFlags(postVisible, currentUser);
         } catch (error) {
             throw new Error("TopicId invalid");
         }
@@ -275,7 +319,13 @@ class PostsService {
 
     async getById(id) {
         const post = await Post.findOne({
-            where: { id },
+            where: {
+                id,
+                status: "published",
+                published_at: {
+                    [Op.lte]: new Date(),
+                },
+            },
             include: [{ model: Topic, as: "topic" }],
         });
 
@@ -283,7 +333,12 @@ class PostsService {
     }
 
     async getRelatedPosts(currentPostId, currentUser) {
-        const currentPostTopic = await Post.findByPk(currentPostId, {
+        const currentPostTopic = await Post.findOne({
+            where: {
+                id: currentPostId,
+                status: "published",
+                published_at: { [Op.lte]: new Date() },
+            },
             include: {
                 model: Topic,
                 as: "topics",
@@ -291,9 +346,11 @@ class PostsService {
             },
         });
 
-        if (!currentPostTopic) throw new Error("post not found");
+        if (!currentPostTopic) throw new Error("Post not found");
 
         const topicIds = currentPostTopic.topics.map((item) => item.id);
+
+        let allPosts = [];
 
         if (topicIds.length === 0) {
             const posts = await Post.findAll({
@@ -322,7 +379,7 @@ class PostsService {
                 ],
             });
 
-            return this.handleLikeAndBookmarkFlags(posts, currentUser);
+            allPosts = posts;
         }
 
         const postByTopics = await Post.findAll({
@@ -360,23 +417,23 @@ class PostsService {
         });
 
         if (postByTopics.length >= 3) {
-            return this.handleLikeAndBookmarkFlags(postByTopics, currentUser);
+            allPosts = postByTopics;
         }
 
         const existingIds = postByTopics.map((item) => item.id);
         const excludeIds = [currentPostId, ...existingIds];
 
-        const morePosts = Post.findAll({
-            where: { id: { [Op.not]: excludeIds } },
+        const morePosts = await Post.findAll({
+            where: {
+                id: { [Op.notIn]: excludeIds },
+                status: "published",
+                published_at: { [Op.lte]: new Date() },
+            },
             include: [
                 {
                     model: Topic,
                     as: "topics",
                     through: { attributes: [] },
-
-                    where: {
-                        id: topicIds,
-                    },
                 },
                 {
                     model: User,
@@ -400,10 +457,15 @@ class PostsService {
             order: Sequelize.literal("RAND()"),
         });
 
-        return this.handleLikeAndBookmarkFlags(
-            [...morePosts, ...postByTopics],
-            currentUser
+        allPosts = [...morePosts, ...postByTopics];
+
+        const followingIds = await this.getUserFollowingIds(currentUser);
+
+        const postVisible = allPosts.filter((post) =>
+            this.canUserViewPost(post, currentUser, followingIds)
         );
+
+        return this.handleLikeAndBookmarkFlags(postVisible, currentUser);
     }
 
     handleLikeAndBookmarkFlags = async (posts, currentUser) => {
@@ -481,8 +543,6 @@ class PostsService {
                 await post.addTopic(topic.id);
             })
         );
-
-        // tăng post count của user vừa tạo
 
         currentUser.posts_count = currentUser.posts_count + 1;
         await currentUser.save();
