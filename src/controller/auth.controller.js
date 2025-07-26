@@ -62,10 +62,10 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
     try {
-        await authService.resetPassword(req.body);
-        res.status(200).send("");
+        await authService.resetPassword(req.body, req.user);
+        response.success(res, 204, "");
     } catch (error) {
-        throw new Error(error);
+        throw new Error(error.message);
     }
 };
 

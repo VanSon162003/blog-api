@@ -1,5 +1,5 @@
 const { where } = require("sequelize");
-const { User, Queue } = require("../db/models");
+const { User, Queue, UserSetting } = require("../db/models");
 const { hash, compare } = require("../utils/bcrypt");
 const jwtService = require("./jwt.service");
 const refreshTokenService = require("./refreshToken.service");
@@ -18,6 +18,32 @@ const register = async (data) => {
 
     const userId = user.id;
     const token = jwtService.generateAccessToken(userId);
+
+    try {
+        const defaultSettings = {
+            allowComments: true,
+            allowDirectMessages: "everyone",
+            defaultPostVisibility: "public",
+            emailNewComments: true,
+            emailNewFollowers: true,
+            emailNewLikes: true,
+            emailWeeklyDigest: true,
+            profileVisibility: "public",
+            pushNotifications: true,
+            requireCommentApproval: false,
+            searchEngineIndexing: true,
+            showEmail: false,
+            showViewCounts: true,
+            twoFactorEnabled: false,
+        };
+
+        await UserSetting.create({
+            data: JSON.stringify(defaultSettings),
+            user_id: userId,
+        });
+    } catch (error) {
+        console.log("lỗi user settings");
+    }
 
     return {
         userId,
@@ -75,11 +101,48 @@ const forgotPassword = async (email) => {
     });
 };
 
-const resetPassword = async (data) => {
-    const { userId, password, ...remaining } = data;
+const resetPassword = async (data, currentUser) => {
+    if (currentUser) {
+        console.log(currentUser.id);
 
+        const isValid = await compare(
+            data.currentPassword,
+            currentUser.password
+        );
+        if (!isValid)
+            throw new Error("The current password you entered is incorrect.");
+
+        const isSameAsOld = await compare(
+            data.newPassword,
+            currentUser.password
+        );
+        if (isSameAsOld)
+            throw new Error(
+                "Please choose a password that is not the same as your current one."
+            );
+
+        try {
+            await User.update(
+                {
+                    password: await hash(data.newPassword),
+                },
+                {
+                    where: { id: currentUser.id },
+                }
+            );
+        } catch (error) {
+            throw new Error(error);
+        }
+
+        return;
+    }
+
+    const { userId, password } = data;
+
+    if (!userId) {
+        throw new Error("userID is missing");
+    }
     const { dataValues: user } = await User.findOne({ where: { id: userId } });
-    console.log(user);
 
     if (!user) {
         throw new Error("Invalid login credentials.");

@@ -1,5 +1,12 @@
 const { where } = require("sequelize");
-const { Comment, Post, User, Like } = require("../db/models");
+const {
+    Comment,
+    Post,
+    User,
+    Like,
+    UserSetting,
+    Queue,
+} = require("../db/models");
 
 const likesService = require("../service/likes.service");
 
@@ -176,6 +183,34 @@ class CommentsService {
 
         let parentId = data.parent_id || null;
 
+        let currentPost = null;
+
+        try {
+            currentPost = await Post.findOne({
+                where: {
+                    id: data.post_id,
+                },
+            });
+            if (currentPost) {
+                const userPost = await User.findByPk(currentPost?.user_id, {
+                    include: {
+                        model: UserSetting,
+                        as: "settings",
+                    },
+                });
+
+                const settings = JSON.parse(userPost.settings.data);
+
+                if (!settings.allowComments) {
+                    throw new Error("You can't comment in post this");
+                }
+            }
+        } catch (error) {
+            throw new Error(error.message);
+        }
+
+        console.log(123);
+
         if (parentId) {
             const parentComment = await Comment.findByPk(parentId);
 
@@ -241,6 +276,36 @@ class CommentsService {
                 },
             ],
         });
+
+        try {
+            if (currentPost) {
+                const userPost = await User.findByPk(currentPost?.user_id, {
+                    include: {
+                        model: UserSetting,
+                        as: "settings",
+                    },
+                });
+
+                const settings = JSON.parse(userPost.settings.data);
+
+                if (
+                    userPost.id !== currentUser.id &&
+                    settings.emailNewComments
+                ) {
+                    await Queue.create({
+                        type: "sendNewCommentJob",
+                        payload: {
+                            userPostId: userPost.id,
+                            userCommentId: currentUser.id,
+                            content: data.content,
+                            post: currentPost,
+                        },
+                    });
+                }
+            }
+        } catch (error) {
+            console.log(error);
+        }
 
         return comment;
     }

@@ -4,7 +4,10 @@ const response = require("../utils/response");
 
 exports.getUserByUsername = async (req, res) => {
     try {
-        const result = await userService.getUserByUsername(req.params.username);
+        const result = await userService.getUserByUsername(
+            req.params.username,
+            req.user
+        );
         response.success(res, 200, result);
     } catch (error) {
         response.error(res, 400, error.message);
@@ -48,12 +51,11 @@ exports.editProfile = async (req, res) => {
     }
 };
 
-// const files = req.files;
-
-//     const avatarPath = files.avatar?.[0].path;
-//     const coverImagePath = files.coverImage?.[0].path;
-
-//     console.log("test nhé", 123, avatarPath, coverImagePath);
-
-//     const { ...data } = req.body;
-//     console.log(data);
+exports.settings = async (req, res) => {
+    try {
+        await userService.settings(req.body, req.user);
+        response.success(res, 201, true);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};

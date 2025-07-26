@@ -1,5 +1,5 @@
 const response = require("../utils/response");
-const { User } = require("../db/models");
+const { User, UserSetting } = require("../db/models");
 const jwtService = require("../service/jwt.service");
 
 async function checkAuth(req, res, next) {
@@ -23,6 +23,11 @@ async function checkAuth(req, res, next) {
             //     "created_at",
             // ],
             where: { id: payload.userId },
+            include: {
+                model: UserSetting,
+                as: "settings",
+                required: false,
+            },
         });
 
         if (!user) {

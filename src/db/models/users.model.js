@@ -179,6 +179,8 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "followed_id",
             otherKey: "following_id",
         });
+
+        user.hasOne(db.UserSetting, { foreignKey: "user_id", as: "settings" });
     };
 
     return user;

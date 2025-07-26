@@ -1,8 +1,12 @@
 const sendVerifyEmailJob = require("../job/sendVerifyEmailJob");
+const sendNewCommentJob = require("../job/sendNewCommentJob");
+const sendNewFollowerJob = require("../job/sendNewFollowerJob");
 const QueueService = require("../service/queue.service");
 
 const handlers = {
     sendVerifyEmailJob,
+    sendNewCommentJob,
+    sendNewFollowerJob,
 };
 
 async function jobProcess(job) {

@@ -5,7 +5,7 @@ const checkAuth = require("../middlewares/checkAuth");
 const upload = require("../middlewares/upload");
 
 router.get("/follow/:userId", checkAuth, usersController.checkFollowing);
-router.get("/:username", usersController.getUserByUsername);
+router.get("/:username", checkAuth, usersController.getUserByUsername);
 router.post("/follow/:userId", checkAuth, usersController.toggleFollow);
 router.put(
     "/edit-profile",
@@ -16,5 +16,6 @@ router.put(
     checkAuth,
     usersController.editProfile
 );
+router.post("/settings", checkAuth, usersController.settings);
 
 module.exports = router;

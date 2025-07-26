@@ -32,31 +32,6 @@ class PostsService {
         return false;
     }
 
-    async getUserFollowingIds(currentUser) {
-        try {
-            if (!currentUser) return [];
-
-            const userFollowing = await User.findByPk(currentUser.id, {
-                include: {
-                    model: User,
-                    as: "following",
-                    attributes: ["id"],
-                    through: { attributes: [] },
-                },
-            });
-
-            if (!userFollowing || !userFollowing.following) {
-                return [];
-            }
-
-            const ids = userFollowing.following.map((item) => item.id);
-            return ids;
-        } catch (error) {
-            console.log(error);
-            return [];
-        }
-    }
-
     async getAll(currentUser) {
         try {
             const posts = await Post.findAll({
@@ -89,7 +64,9 @@ class PostsService {
                 order: [["created_at", "DESC"]],
             });
 
-            const followingIds = await this.getUserFollowingIds(currentUser);
+            const followingIds = await usersService.getUserFollowingIds(
+                currentUser
+            );
 
             const postVisible = posts.filter((post) =>
                 this.canUserViewPost(post, currentUser, followingIds)
@@ -172,7 +149,9 @@ class PostsService {
 
             if (!post) throw new Error("Post not found");
 
-            const followingIds = await this.getUserFollowingIds(currentUser);
+            const followingIds = await usersService.getUserFollowingIds(
+                currentUser
+            );
 
             const canView = this.canUserViewPost(
                 post,
@@ -191,7 +170,11 @@ class PostsService {
     }
 
     async getByUserName(username, currentUser) {
-        const user = await usersService.getUserByUsername(username);
+        const user = await User.findOne({
+            where: {
+                username,
+            },
+        });
 
         if (!user) throw new Error("Not found user by username");
 
@@ -225,7 +208,9 @@ class PostsService {
             ],
         });
 
-        const followingIds = await this.getUserFollowingIds(currentUser);
+        const followingIds = await usersService.getUserFollowingIds(
+            currentUser
+        );
 
         const postVisible = posts.filter((post) =>
             this.canUserViewPost(post, currentUser, followingIds)
@@ -261,7 +246,9 @@ class PostsService {
                 ],
             });
 
-            const followingIds = await this.getUserFollowingIds(currentUser);
+            const followingIds = await usersService.getUserFollowingIds(
+                currentUser
+            );
 
             const postVisible = posts.filter((post) =>
                 this.canUserViewPost(post, currentUser, followingIds)
@@ -459,7 +446,9 @@ class PostsService {
 
         allPosts = [...morePosts, ...postByTopics];
 
-        const followingIds = await this.getUserFollowingIds(currentUser);
+        const followingIds = await usersService.getUserFollowingIds(
+            currentUser
+        );
 
         const postVisible = allPosts.filter((post) =>
             this.canUserViewPost(post, currentUser, followingIds)
