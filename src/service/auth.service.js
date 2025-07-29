@@ -68,6 +68,11 @@ const login = async (email, password) => {
         throw new Error("Invalid login credentials.");
     }
 
+    if (!user.verified_at)
+        throw new Error(
+            "You need to verify your account to log in. We’ve sent a verification code to your email."
+        );
+
     const isValid = await compare(password, user.password);
 
     if (!isValid) {
