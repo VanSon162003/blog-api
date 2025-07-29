@@ -145,13 +145,16 @@ module.exports = (sequelize, DataTypes) => {
             as: "comments",
         });
 
-        user.hasMany(db.Message, {
-            foreignKey: "sender_id",
-            as: "messages",
-        });
-        user.hasMany(db.Conversation, {
-            foreignKey: "created_by",
+        user.belongsToMany(db.Conversation, {
+            through: "user_conversation",
+            foreignKey: "user_id",
+            otherKey: "conversation_id",
             as: "conversations",
+        });
+
+        user.hasMany(db.Message, {
+            foreignKey: "user_id",
+            as: "messages",
         });
 
         user.hasMany(db.Like, {

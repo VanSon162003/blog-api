@@ -1,5 +1,5 @@
 const { where } = require("sequelize");
-const { Conversation, Topic } = require("../db/models");
+const { Conversation, Topic, User } = require("../db/models");
 
 class ConversationsService {
     async getAll() {
@@ -24,8 +24,28 @@ class ConversationsService {
         return conversation;
     }
 
-    async create(data) {
-        const conversation = await Conversation.create(data);
+    async create(userId1, userId2) {
+        if (userId1 === userId2) {
+            throw new Error("Cannot create conversation with yourself.");
+        }
+
+        const ids = [userId1, userId2].sort((a, b) => a - b);
+        const name = `private_${ids[0]}_${ids[1]}`;
+
+        const [conversation, created] = await Conversation.findOrCreate({
+            where: { name },
+        });
+
+        if (created) {
+            const users = await User.findAll({
+                where: {
+                    id: ids,
+                },
+            });
+
+            await conversation.addUsers(users);
+        }
+
         return conversation;
     }
 

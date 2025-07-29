@@ -21,9 +21,11 @@ module.exports = (sequelize, DataTypes) => {
     );
 
     conversation.associate = (db) => {
-        conversation.belongsTo(db.User, {
-            foreignKey: "created_by",
-            as: "creator",
+        conversation.belongsToMany(db.User, {
+            through: "user_conversation",
+            foreignKey: "conversation_id",
+            otherKey: "user_id",
+            as: "users",
         });
 
         conversation.hasMany(db.Message, {
