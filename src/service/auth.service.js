@@ -108,8 +108,6 @@ const forgotPassword = async (email) => {
 
 const resetPassword = async (data, currentUser) => {
     if (currentUser) {
-        console.log(currentUser.id);
-
         const isValid = await compare(
             data.currentPassword,
             currentUser.password

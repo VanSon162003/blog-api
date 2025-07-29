@@ -209,7 +209,7 @@
                                             font-weight: 600;
                                         "
                                     >
-                                        <%= following.username %>'s Profile
+                                        <%= follower.username %>'s Profile
                                     </h3>
                                     <div
                                         style="
@@ -227,7 +227,7 @@
                                                     margin-bottom: 5px;
                                                 "
                                             >
-                                                <%= following.posts_count %>
+                                                <%= follower.posts_count %>
                                             </div>
                                             <div
                                                 style="
@@ -248,7 +248,7 @@
                                                     margin-bottom: 5px;
                                                 "
                                             >
-                                                <%= following.follower_count %>
+                                                <%= follower.follower_count %>
                                             </div>
                                             <div
                                                 style="
@@ -269,7 +269,7 @@
                                                     margin-bottom: 5px;
                                                 "
                                             >
-                                                <%= following.following_count %>
+                                                <%= follower.following_count %>
                                             </div>
                                             <div
                                                 style="
@@ -292,7 +292,7 @@
                                     "
                                 >
                                     <a
-                                        href="http://localhost:5173/profile/<%= following.username %>"
+                                        href="http://localhost:5173/profile/<%= follower.username %>"
                                         style="
                                             display: inline-block;
                                             background-color: transparent;
