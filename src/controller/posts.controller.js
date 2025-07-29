@@ -79,6 +79,15 @@ exports.getRelatedPosts = async (req, res) => {
     }
 };
 
+exports.viewsCount = async (req, res) => {
+    try {
+        const post = await postsService.viewsCount(req.params.id);
+        response.success(res, 200, post);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};
+
 exports.create = async (req, res) => {
     try {
         const post = await postsService.create(req.file, req.body, req.user);

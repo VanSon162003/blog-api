@@ -12,6 +12,7 @@ router.get("/user/bookmarks", checkAuth, postsController.getListByUserId);
 router.get("/:postId/related", checkAuth, postsController.getRelatedPosts);
 router.get("/user/:username", checkAuth, postsController.getByUserName);
 
+router.post("/views/:id", postsController.viewsCount);
 router.post("/", upload.single("thumbnail"), checkAuth, postsController.create);
 router.post("/:postId/like", checkAuth, postsController.toggleLike);
 router.put("/:id", postsController.update);

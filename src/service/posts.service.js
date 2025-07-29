@@ -539,6 +539,17 @@ class PostsService {
         return post;
     }
 
+    async viewsCount(id) {
+        try {
+            const post = await Post.findByPk(id);
+            post.views_count = post.views_count + 1;
+
+            await post.save();
+        } catch (error) {
+            return console.log("Lỗi khi update: ", error);
+        }
+    }
+
     async toggleLike(currentUser, postId) {
         if (!currentUser)
             throw new Error("You must be logged in to like this post.");
