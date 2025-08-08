@@ -22,7 +22,6 @@ module.exports = {
         dialect: "mysql",
         dialectOptions: {
             bigNumberStrings: true,
-            ssl: undefined,
         },
     },
     production: {
@@ -34,7 +33,6 @@ module.exports = {
         dialect: "mysql",
         dialectOptions: {
             bigNumberStrings: true,
-            ssl: false,
         },
     },
 };
