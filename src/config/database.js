@@ -22,6 +22,7 @@ module.exports = {
         dialect: "mysql",
         dialectOptions: {
             bigNumberStrings: true,
+            ssl: false,
         },
     },
     production: {
