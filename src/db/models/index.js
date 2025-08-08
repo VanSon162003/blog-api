@@ -29,7 +29,7 @@ if (config.use_env_variable) {
         {
             ...config,
             dialectOptions: {
-                ssl: false,
+                ssl: undefined,
                 ...(config.dialectOptions || {}),
             },
         }
