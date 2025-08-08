@@ -2,7 +2,7 @@
 
 module.exports = {
     up: async (queryInterface, Sequelize) => {
-        await queryInterface.addColumn("Users", "privacy", {
+        await queryInterface.addColumn("users", "privacy", {
             type: Sequelize.JSON,
             allowNull: true,
             after: "skills",
@@ -10,6 +10,6 @@ module.exports = {
     },
 
     down: async (queryInterface, Sequelize) => {
-        await queryInterface.removeColumn("Users", "privacy");
+        await queryInterface.removeColumn("users", "privacy");
     },
 };
