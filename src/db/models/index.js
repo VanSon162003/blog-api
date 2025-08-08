@@ -11,7 +11,15 @@ const db = {};
 
 let sequelize;
 if (config.use_env_variable) {
-    sequelize = new Sequelize(process.env[config.use_env_variable], config);
+    sequelize = new Sequelize(
+        process.env[config.use_env_variable],
+        {
+            dialectOptions: {
+                ssl: false,
+            },
+        },
+        config
+    );
 } else {
     sequelize = new Sequelize(
         config.database,
