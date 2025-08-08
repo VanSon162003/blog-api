@@ -8,7 +8,7 @@ const { sequelize } = require("./src/db/models");
 
 const notFoundHandle = require("./src/middlewares/errors/notFoundHandle");
 const errorHandler = require("./src/middlewares/errors/erorrHandle");
-
+// dấu hiệu
 const path = require("path");
 
 const app = express();
