@@ -6,6 +6,7 @@ const usersService = require("./users.service");
 const { Json } = require("sequelize/lib/utils");
 const topicsService = require("./topics.service");
 const slugify = require("slugify");
+const pusherService = require("./pusher.service");
 
 class PostsService {
     canUserViewPost(post, currentUser, followingIds = []) {
@@ -575,6 +576,22 @@ class PostsService {
 
         post.likes_count = (post.likes_count ?? 0) + 1;
         await post.save();
+
+        try {
+            const userPost = await User.findByPk(post.user_id);
+
+            await pusherService.likePost(
+                {
+                    recipientId: userPost.id,
+                    post: {
+                        slug: post.slug,
+                        id: post.id,
+                    },
+                },
+                currentUser
+            );
+        } catch (error) {}
+
         return true;
     }
 

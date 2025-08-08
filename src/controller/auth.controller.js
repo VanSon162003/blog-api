@@ -38,8 +38,6 @@ const me = async (req, res) => {
 };
 
 const refreshToken = async (req, res) => {
-    console.log("token: +", req.body.refresh_token);
-
     try {
         const tokenData = await authService.refreshAccessToken(
             req.body.refresh_token

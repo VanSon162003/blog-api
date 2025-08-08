@@ -9,6 +9,7 @@ const {
 } = require("../db/models");
 
 const likesService = require("../service/likes.service");
+const pusherService = require("./pusher.service");
 
 class CommentsService {
     async getAll() {
@@ -209,8 +210,6 @@ class CommentsService {
             throw new Error(error.message);
         }
 
-        console.log(123);
-
         if (parentId) {
             const parentComment = await Comment.findByPk(parentId);
 
@@ -306,6 +305,21 @@ class CommentsService {
         } catch (error) {
             console.log(error);
         }
+
+        try {
+            const userPost = await User.findByPk(currentPost.user_id);
+
+            await pusherService.sendComment(
+                {
+                    recipientId: userPost.id,
+                    post: {
+                        slug: currentPost.slug,
+                        id: currentPost.id,
+                    },
+                },
+                currentUser
+            );
+        } catch (error) {}
 
         return comment;
     }

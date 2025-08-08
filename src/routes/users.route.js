@@ -17,5 +17,6 @@ router.put(
     usersController.editProfile
 );
 router.post("/settings", checkAuth, usersController.settings);
+router.post("/notifications", checkAuth, usersController.notifications);
 
 module.exports = router;

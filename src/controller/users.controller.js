@@ -59,3 +59,12 @@ exports.settings = async (req, res) => {
         response.error(res, 400, error.message);
     }
 };
+
+exports.notifications = async (req, res) => {
+    try {
+        await userService.notifications(req.body.ids, req.user);
+        response.success(res, 201, true);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};

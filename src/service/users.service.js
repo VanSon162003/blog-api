@@ -1,6 +1,14 @@
 const { where } = require("sequelize");
-const { User, Queue, UserSetting } = require("../db/models");
+const {
+    User,
+    Queue,
+    UserSetting,
+    UserNotification,
+    Notification,
+} = require("../db/models");
 const validator = require("validator");
+const pusher = require("../config/pusher");
+const pusherService = require("./pusher.service");
 
 class UsersService {
     canUserViewProfile(currentUser, targetUser, followingIds = []) {
@@ -198,6 +206,11 @@ class UsersService {
                 console.log(error);
             }
 
+            await pusherService.follow(
+                { recipientId: userFollower.id },
+                userFollowing
+            );
+
             return await currentUser.addFollowing(userId);
         }
     }
@@ -276,6 +289,26 @@ class UsersService {
                 data: JSON.stringify(settings),
             });
         }
+    }
+
+    async notifications(notificationIds, currentUser) {
+        if (!currentUser)
+            throw new Error("You must be logged to edit settings");
+        console.log(notificationIds);
+
+        const result = await UserNotification.update(
+            {
+                read_at: Date.now(),
+            },
+            {
+                where: {
+                    user_id: currentUser.id,
+                    notification_id: notificationIds,
+                },
+            }
+        );
+
+        console.log(result);
     }
 }
 

@@ -7,6 +7,8 @@ exports.sendMessage = async (req, res) => {
 
         response.success(res, 200, newMessage);
     } catch (error) {
+        console.log(error);
+
         response.error(res, 400, error);
     }
 };

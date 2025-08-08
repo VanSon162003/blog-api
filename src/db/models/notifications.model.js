@@ -10,6 +10,16 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING(255),
                 allowNull: false,
             },
+            message: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                defaultValue: null,
+            },
+            link: {
+                type: DataTypes.STRING(255),
+                allowNull: true,
+                defaultValue: null,
+            },
             notifiable_type: {
                 type: DataTypes.STRING(100),
                 allowNull: false,
@@ -25,6 +35,15 @@ module.exports = (sequelize, DataTypes) => {
             timestamps: true,
         }
     );
+
+    notification.associate = (db) => {
+        notification.belongsToMany(db.User, {
+            through: db.UserNotification,
+            foreignKey: "notification_id",
+            otherKey: "user_id",
+            as: "users",
+        });
+    };
 
     return notification;
 };
