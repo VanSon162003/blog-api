@@ -5,10 +5,10 @@ const pusher = new Pusher({
     appId: "1",
     key: "app1",
     secret: "app1-secret-key",
-    useTLS: false,
+    useTLS: true,
     cluster: "",
-    host: "103.20.97.228",
-    port: 6001,
+    host: "chat.vsron.site",
+    port: 443,
 });
 
 module.exports = pusher;
