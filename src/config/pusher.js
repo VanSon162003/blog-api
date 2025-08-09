@@ -4,10 +4,10 @@ const pusher = new Pusher({
     appId: "1",
     key: "app1",
     secret: "app1-secret-key",
-    useTLS: process.env.USETLS,
+    useTLS: false,
     cluster: "",
-    host: process.env.HOST,
-    port: process.env.PORT,
+    host: "103.20.97.228",
+    port: 6001,
 });
 
 module.exports = pusher;
