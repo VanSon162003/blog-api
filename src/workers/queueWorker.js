@@ -11,6 +11,7 @@ const handlers = {
 
 async function jobProcess(job) {
     const handler = handlers[job.type];
+
     if (handler) {
         try {
             await QueueService.update(job.id, { status: "processing" });
