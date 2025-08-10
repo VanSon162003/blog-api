@@ -1,16 +1,90 @@
-const { where } = require("sequelize");
-const { Conversation, Topic, User } = require("../db/models");
+const { where, Op } = require("sequelize");
+const { Conversation, Topic, User, Message } = require("../db/models");
 
 class ConversationsService {
-    async getAll() {
-        const conversations = await Conversation.findAll();
+    async getAll(currentUser) {
+        if (!currentUser)
+            throw new Error(
+                "You can't get conversations when you are not logged in."
+            );
+
+        const conversations = await Conversation.findAll({
+            include: [
+                {
+                    model: User,
+                    as: "users",
+                    attributes: ["id", "username", "fullname", "avatar"],
+                    through: { attributes: [] },
+                    where: { id: currentUser?.id },
+                    required: true,
+                    include: {
+                        model: Message,
+                        as: "messages",
+                        limit: 1,
+                        attributes: [
+                            "id",
+                            "conversation_id",
+                            "type",
+                            "content",
+                            "createdAt",
+                            "updatedAt",
+                        ],
+
+                        where: {
+                            deleted_at: null,
+                        },
+                        order: [["created_at", "DESC"]],
+                    },
+                },
+                {
+                    model: User,
+                    as: "otherUsers",
+                    attributes: ["id", "username", "fullname", "avatar"],
+                    through: { attributes: [] },
+                    where: { id: { [Op.ne]: currentUser?.id } },
+                    include: {
+                        model: Message,
+                        as: "messages",
+                        limit: 1,
+                        attributes: [
+                            "id",
+                            "conversation_id",
+                            "type",
+                            "content",
+                            "createdAt",
+                            "updatedAt",
+                        ],
+                        where: {
+                            deleted_at: null,
+                        },
+                        order: [["created_at", "DESC"]],
+                    },
+                },
+            ],
+        });
+
         return conversations;
     }
 
-    async getById(id) {
+    async getById(id, currentUser) {
+        if (!currentUser)
+            throw new Error(
+                "You can't get conversations when you are not logged in."
+            );
         const conversation = await Conversation.findOne({
             where: { id },
-            include: [{ model: Topic, as: "topic" }],
+            attributes: ["name"],
+            include: {
+                model: User,
+                as: "users",
+                attributes: ["id"],
+                where: {
+                    id: { [Op.ne]: currentUser.id },
+                },
+                through: {
+                    attributes: [],
+                },
+            },
         });
 
         return conversation;

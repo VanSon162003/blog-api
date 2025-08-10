@@ -294,7 +294,6 @@ class UsersService {
     async notifications(notificationIds, currentUser) {
         if (!currentUser)
             throw new Error("You must be logged to edit settings");
-        console.log(notificationIds);
 
         const result = await UserNotification.update(
             {
@@ -307,8 +306,6 @@ class UsersService {
                 },
             }
         );
-
-        console.log(result);
     }
 }
 

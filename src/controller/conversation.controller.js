@@ -1,5 +1,27 @@
 const conversationsService = require("../service/conversation.service");
 const response = require("../utils/response");
+
+exports.getAll = async (req, res) => {
+    try {
+        const conversation = await conversationsService.getAll(req.user);
+        response.success(res, 200, conversation);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};
+
+exports.getOne = async (req, res) => {
+    try {
+        const conversation = await conversationsService.getById(
+            req.params.id,
+            req.user
+        );
+        response.success(res, 200, conversation);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};
+
 exports.getOneByName = async (req, res) => {
     try {
         const conversation = await conversationsService.getByName(
