@@ -525,10 +525,8 @@ class PostsService {
                     item
                 );
 
-                if (!created) {
-                    topic.posts_count += 1;
-                    await topic.save();
-                }
+                topic.posts_count += 1;
+                await topic.save();
 
                 await post.addTopic(topic.id);
             })
