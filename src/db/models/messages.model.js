@@ -26,6 +26,11 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING(50),
                 defaultValue: "text",
             },
+            role: {
+                type: DataTypes.STRING(50),
+                allowNull: true,
+                defaultValue: null,
+            },
             content: {
                 type: DataTypes.TEXT,
                 defaultValue: null,

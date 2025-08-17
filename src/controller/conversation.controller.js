@@ -57,3 +57,38 @@ exports.remove = async (req, res) => {
     await conversationsService.remove(req.params.id);
     res.status(204).send();
 };
+
+// open ai
+exports.chat = async (req, res) => {
+    const newMessages = req.body.message;
+
+    const conversationId = req.params.id;
+
+    try {
+        const intent = await conversationsService.chat(
+            newMessages,
+            conversationId,
+            req.user
+        );
+
+        response.success(res, 200, intent);
+    } catch (error) {
+        console.log(error);
+
+        response.error(res, 400, error.message);
+    }
+};
+
+exports.removeChat = async (req, res) => {
+    const conversationId = req.params.id;
+
+    try {
+        await conversationsService.removeChat(conversationId, req.user);
+
+        response.success(res, 200, "");
+    } catch (error) {
+        console.log(error);
+
+        response.error(res, 400, error.message);
+    }
+};

@@ -1,4 +1,5 @@
 const messagesService = require("../service/messages.service");
+const response = require("../utils/response");
 exports.getOneByName = async (req, res) => {
     console.log(req.params.name);
 
@@ -11,18 +12,22 @@ exports.getByConversationId = async (req, res) => {
     res.json({ data: message });
 };
 
-// exports.create = async (req, res) => {
-//     const post = await postsService.create(req.body);
-//     res.json(post);
-// };
+exports.create = async (req, res) => {
+    try {
+        const message = await messagesService.create(req.body, req.user);
+        response.success(res, 201, message);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
+};
 
 // exports.update = async (req, res) => {
-//     const post = await postsService.update(req.params.id, req.body);
+//     const message = await messagesService.update(req.params.id, req.body);
 
-//     res.json(post);
+//     res.json(message);
 // };
 
 // exports.remove = async (req, res) => {
-//     await postsService.remove(req.params.id);
+//     await messagesService.remove(req.params.id);
 //     res.status(204).send();
 // };

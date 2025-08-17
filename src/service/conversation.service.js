@@ -1,5 +1,8 @@
 const { where, Op } = require("sequelize");
 const { Conversation, Topic, User, Message } = require("../db/models");
+const intentClassifier = require("../utils/intentClassifier");
+const messagesService = require("../service/messages.service");
+const sendOpenai = require("../agents/sendOpenai");
 
 class ConversationsService {
     async getAll(currentUser) {
@@ -135,9 +138,143 @@ class ConversationsService {
         }
     }
 
-    async remove(id) {
+    // open ai
+    async chat(newMessages, conversationId, currentUser) {
+        if (!currentUser)
+            throw new Error("You need to log in to use the chatbot.");
+        const [chatbot, create] = await User.findOrCreate({
+            where: {
+                email: `chatbot@gmail.com`,
+                username: "chat bot",
+            },
+        });
+
+        let conversation = null;
+        let messages = [];
+        if (conversationId === "null") {
+            const timestamp = new Date().toISOString().replace(/[-:T.]/g, "");
+            const name = `user-${timestamp}`;
+            conversation = await Conversation.create({ name });
+        } else {
+            messages = await messagesService.getByConversationId(
+                conversationId
+            );
+
+            conversation = await Conversation.findByPk(conversationId);
+        }
+
+        const checkCurrentUser = await conversation.hasUser(currentUser.id);
+        const checkChatbot = await conversation.hasUser(chatbot.id);
+
+        if (!checkCurrentUser) {
+            await conversation.addUser(currentUser.id);
+        }
+
+        if (!checkChatbot) {
+            await conversation.addUser(chatbot.id);
+        }
+
+        const messagesAll = messages.map((item) => {
+            const result = JSON.parse(item.content);
+
+            return result;
+        });
+
+        const messagesUser = messagesAll
+            .filter((item) => item.role === "user")
+            .slice(-4);
+
+        const intent = await intentClassifier([
+            ...messagesUser,
+            {
+                role: "user",
+                content: newMessages,
+            },
+        ]);
+
+        let result = null;
+
+        switch (intent) {
+            case "content.search":
+                result = await sendOpenai(
+                    "content.search",
+                    messagesAll.slice(-10)
+                );
+                break;
+            case "tutorial.assist":
+                result = await sendOpenai(
+                    "tutorial.assist",
+                    messagesAll.slice(-10)
+                );
+                break;
+
+            case "qa.expert":
+                result = await sendOpenai("qa.expert", messagesAll.slice(-10));
+                break;
+
+            case "feedback.engage":
+                result = await sendOpenai(
+                    "feedback.engage",
+                    messagesAll.slice(-10)
+                );
+                break;
+
+            case "news.update":
+                result = await sendOpenai(
+                    "news.update",
+                    messagesAll.slice(-10)
+                );
+                break;
+
+            case "nav.support":
+                result = await sendOpenai(
+                    "nav.support",
+                    messagesAll.slice(-10)
+                );
+                break;
+
+            default:
+                result = await sendOpenai("default", messagesAll.slice(-10));
+        }
+
+        await Message.create({
+            user_id: currentUser.id,
+            conversation_id:
+                conversationId === "null" ? conversation.id : conversationId,
+            content: JSON.stringify({
+                role: "user",
+                content: newMessages,
+            }),
+            role: "user",
+        });
+
+        await Message.create({
+            user_id: chatbot.id,
+            conversation_id:
+                conversationId === "null" ? conversation.id : conversationId,
+            role: "system",
+            content: JSON.stringify({
+                role: "system",
+                ...result,
+            }),
+        });
+
+        return {
+            content: result.content,
+            conversationId:
+                conversationId === "null" ? conversation.id : conversationId,
+        };
+    }
+
+    async removeChat(id) {
         await Conversation.destroy({
             where: { id },
+        });
+
+        await Message.destroy({
+            where: {
+                conversation_id: id,
+            },
         });
 
         return null;

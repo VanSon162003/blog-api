@@ -28,9 +28,59 @@ class MessagesService {
         return message;
     }
 
-    async create(data) {
-        const message = await Message.create(data);
-        return message;
+    async create(data, currentUser) {
+        if (!currentUser) throw new Error("You need logged oke!!!");
+
+        if (data.role) {
+            let conversation = null;
+            let message = null;
+            if (!data.conversationId) {
+                const timestamp = new Date()
+                    .toISOString()
+                    .replace(/[-:T.]/g, "");
+                const name = `user-${timestamp}`;
+                conversation = await Conversation.create({ name });
+            }
+
+            if (data.role === "user") {
+                message = await Message.create({
+                    user_id: currentUser.id,
+                    conversation_id: !data.conversationId
+                        ? conversation.id
+                        : data.conversationId,
+                    role: data.role,
+                    content: JSON.stringify({
+                        role: data.role,
+                        content: data.content,
+                    }),
+                });
+            } else {
+                const [chatbot, create] = await User.findOrCreate({
+                    where: {
+                        email: `chatbot@gmail.com`,
+                        username: "chat bot",
+                    },
+                });
+                message = await Message.create({
+                    user_id: chatbot.id,
+                    conversation_id: !data.conversationId
+                        ? conversation.id
+                        : data.conversationId,
+                    role: data.role,
+                    content: JSON.stringify({
+                        role: data.role,
+                        content: data.content,
+                    }),
+                });
+            }
+
+            return {
+                content: JSON.parse(message.content),
+                conversationId: !data?.conversationId
+                    ? conversation?.id
+                    : data?.conversationId,
+            };
+        }
     }
 
     async update(id, data) {
