@@ -7,6 +7,7 @@ const { Json } = require("sequelize/lib/utils");
 const topicsService = require("./topics.service");
 const slugify = require("slugify");
 const pusherService = require("./pusher.service");
+const { error } = require("../utils/response");
 
 class PostsService {
     canUserViewPost(post, currentUser, followingIds = []) {
@@ -593,19 +594,94 @@ class PostsService {
         return true;
     }
 
-    async update(id, data) {
+    async update(thumbnailPath, data, currentUser, slug) {
         try {
-            await Post.update(data, {
-                where: { id },
+            const existingPost = await Post.findOne({
+                where: { slug },
             });
 
-            return await Post.findByPk(id);
+            if (!existingPost) {
+                throw new Error("Post not found");
+            }
+
+            if (existingPost.user_id !== currentUser.id) {
+                throw new Error("You don't have permission to edit this post");
+            }
+
+            const updateData = {};
+
+            if (thumbnailPath) {
+                updateData.thumbnail = thumbnailPath?.path.replace(/\\/g, "/");
+            }
+
+            const { topics, ...remain } = data;
+            const newData = { ...updateData, ...remain };
+
+            if (newData.title && newData.title !== existingPost.title) {
+                const baseSlug = slugify(newData.title, {
+                    lower: true,
+                    strict: true,
+                });
+                let newSlug = baseSlug;
+                let counter = 1;
+
+                while (
+                    await Post.findOne({
+                        where: {
+                            slug: newSlug,
+                            id: { [Op.ne]: existingPost.id },
+                        },
+                    })
+                ) {
+                    newSlug = `${baseSlug}-${counter++}`;
+                }
+                newData.slug = newSlug;
+            }
+
+            await Post.update(newData, {
+                where: { id: existingPost.id },
+            });
+
+            if (topics) {
+                const newTopics = JSON.parse(topics);
+
+                const currentTopics = await existingPost.getTopics();
+
+                if (currentTopics && currentTopics.length > 0) {
+                    await Promise.all(
+                        currentTopics.map(async (topic) => {
+                            await existingPost.removeTopic(topic.id);
+                            topic.posts_count = Math.max(
+                                0,
+                                topic.posts_count - 1
+                            );
+                            await topic.save();
+                        })
+                    );
+                }
+
+                await Promise.all(
+                    newTopics.map(async (item) => {
+                        const { topic, created } =
+                            await topicsService.findOrCreate(item);
+                        topic.posts_count += 1;
+                        await topic.save();
+                        await existingPost.addTopic(topic.id);
+                    })
+                );
+            }
+
+            const updatedPost = await Post.findByPk(existingPost.id);
+            return updatedPost;
         } catch (error) {
-            return console.log("Lỗi khi update: ", error);
+            console.log("Lỗi khi update post: ", error);
+            throw error;
         }
     }
 
-    async remove(id) {
+    async remove(id, currentUser) {
+        if (!currentUser)
+            throw new error("You must be logged in to perform this action");
         await Post.destroy({
             where: { id },
         });

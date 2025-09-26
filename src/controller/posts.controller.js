@@ -110,12 +110,24 @@ exports.toggleLike = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-    const post = await postsService.update(req.params.id, req.body);
-
-    res.json(post);
+    try {
+        const post = await postsService.update(
+            req.file,
+            req.body,
+            req.user,
+            req.params.slug
+        );
+        response.success(res, 200, post);
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
 };
 
 exports.remove = async (req, res) => {
-    await postsService.remove(req.params.id);
-    res.status(204).send();
+    try {
+        await postsService.remove(req.params.id, req.user);
+        response.success(res, 200, "oke");
+    } catch (error) {
+        response.error(res, 400, error.message);
+    }
 };
